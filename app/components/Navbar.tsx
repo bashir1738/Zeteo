@@ -29,9 +29,14 @@ const Navbar = () => {
                             Home
                         </Link>
                         {isConnected && (
-                            <Link href="/dashboard" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                                Dashboard
-                            </Link>
+                            <>
+                                <Link href="/dashboard" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                                    Dashboard
+                                </Link>
+                                <Link href="/portfolio" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                                    Portfolio
+                                </Link>
+                            </>
                         )}
 
                         {/* Wallet Connect Button */}
@@ -90,6 +95,15 @@ const Navbar = () => {
                                 onClick={() => setIsOpen(false)}
                             >
                                 Dashboard
+                            </Link>
+                        )}
+                        {isConnected && (
+                            <Link
+                                href="/portfolio"
+                                className="block text-gray-300 hover:text-white py-2 text-base font-medium"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Portfolio
                             </Link>
                         )}
                         <div className="pt-4 border-t border-white/5">

@@ -15,7 +15,7 @@ const Hero = () => {
         if (pricingSection) {
             pricingSection.scrollIntoView({ behavior: 'smooth' });
         }
-    };
+    }; 
 
     return (
         <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-20">
