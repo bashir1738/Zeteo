@@ -168,7 +168,7 @@ const AirdropTable = () => {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {sortedAirdrops.map((airdrop) => (
-                            <tr key={airdrop.id} className="hover:bg-white/[0.02] transition-colors group">
+                            <tr key={airdrop.id} className="hover:bg-white/2 transition-colors group">
                                 <td className="p-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-lg bg-[#111] flex items-center justify-center border border-white/5 group-hover:border-purple-500/50 transition-colors">
@@ -202,7 +202,7 @@ const AirdropTable = () => {
                                             href={airdrop.claimLink}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-all hover:translate-y-[-1px]"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-all hover:-translate-y-1"
                                         >
                                             Claim Tokens
                                             <ExternalLink className="w-4 h-4" />
