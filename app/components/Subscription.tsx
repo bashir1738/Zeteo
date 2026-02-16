@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Star, Zap, Diamond } from 'lucide-react';
 import clsx from 'clsx';
 import { useWallet } from '@/app/context/WalletContext';
 import { motion } from 'framer-motion';
+import { fetchStarkPrice } from '@/app/utils/price';
 
 import BackgroundAnimation from './BackgroundAnimation';
 
@@ -44,6 +45,11 @@ const plans = [
 const Subscription = () => {
     const { connectWallet, isConnected } = useWallet();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [starkPrice, setStarkPrice] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchStarkPrice().then(setStarkPrice);
+    }, []);
 
     const handleSelect = (planName: string) => {
         if (!isConnected) {
@@ -107,9 +113,16 @@ const Subscription = () => {
                                     </div>
 
                                     {/* Price */}
-                                    <div className="mb-8 flex items-baseline gap-2">
-                                        <span className="text-4xl font-bold text-white">{plan.price}</span>
-                                        <span className="text-sm text-gray-600 uppercase font-mono">{plan.duration}</span>
+                                    <div className="mb-8">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-bold text-white">{plan.price}</span>
+                                            <span className="text-sm text-gray-600 uppercase font-mono">{plan.duration}</span>
+                                        </div>
+                                        {starkPrice && (
+                                            <div className="text-sm text-purple-400 font-mono mt-1">
+                                                {(parseInt(plan.price) / starkPrice).toFixed(2)} STRK
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Divider */}
