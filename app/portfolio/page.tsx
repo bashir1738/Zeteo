@@ -100,7 +100,7 @@ export default function Portfolio() {
         <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto pt-24">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Total Balance Card */}
-                <div className="md:col-span-2 bg-gradient-to-br from-purple-900/40 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                <div className="md:col-span-2 bg-linear-to-br from-purple-900/40 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
@@ -163,7 +163,7 @@ export default function Portfolio() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {filteredAssets.map((asset) => (
-                                <tr key={asset.id} className="hover:bg-white/[0.02] transition-colors">
+                                <tr key={asset.id} className="hover:bg-white/2 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold overflow-hidden">

@@ -43,7 +43,7 @@ export default function Dashboard() {
         <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto">
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl md:text-4xl font-bold bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
                         Your Dashboard
                     </h1>
                     <p className="text-gray-400 mt-2">
