@@ -35,7 +35,7 @@ const plans = [
         duration: '1 Year',
         price: '25 USD',
         bestFor: 'Long-term investors',
-        features: ['Direct VC insights', 'Whale tracking alerts', 'Private alpha group', 'One-on-one strategy'],
+        features: ['Direct VC insights', 'Whale tracking alerts', 'Private alpha group', 'Future airdrop insights'],
         popular: false,
         icon: Diamond,
     },
