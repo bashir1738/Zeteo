@@ -7,6 +7,7 @@ interface Airdrop {
     name: string;
     url: string;
     amount: string;
+    expiry?: number;
 }
 
 interface AirdropTableProps {
@@ -14,6 +15,8 @@ interface AirdropTableProps {
 }
 
 const AirdropTable = ({ airdrops }: AirdropTableProps) => {
+    // Use a stable timestamp for rendering consistency (optional: could be passed as prop)
+    // For now, we'll just skip the "expired" red text check to avoid hydration mismatch/impurity
     if (!airdrops || airdrops.length === 0) {
         return (
             <div className="w-full overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl p-12 text-center">
@@ -37,6 +40,11 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
                             <div className="text-right">
                                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Allocation</div>
                                 <div className="font-mono font-bold text-white">{airdrop.amount}</div>
+                                {airdrop.expiry && (
+                                    <div className="mt-2 text-xs text-gray-400">
+                                        Exp: {new Date(airdrop.expiry * 1000).toLocaleDateString()}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -62,12 +70,13 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
                         <tr className="bg-[#111] text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-white/5">
                             <th className="p-4">Project Name</th>
                             <th className="p-4">Allocation</th>
+                            <th className="p-4">Expires</th>
                             <th className="p-4 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {airdrops.map((airdrop, index) => (
-                            <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
+                            <tr key={index} className="hover:bg-white/5 transition-colors group">
                                 <td className="p-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-lg bg-[#111] flex items-center justify-center border border-white/5 group-hover:border-purple-500/50 transition-colors">
@@ -83,12 +92,17 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
                                         {airdrop.amount}
                                     </span>
                                 </td>
+                                <td className="p-4">
+                                    <span className="text-sm text-gray-400">
+                                        {airdrop.expiry ? new Date(airdrop.expiry * 1000).toLocaleDateString() : 'N/A'}
+                                    </span>
+                                </td>
                                 <td className="p-4 text-center">
                                     <a
                                         href={airdrop.url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-all hover:translate-y-[-1px]"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-all hover:-translate-y-px"
                                     >
                                         Claim Tokens
                                         <ExternalLink className="w-4 h-4" />

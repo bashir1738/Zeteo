@@ -1,6 +1,8 @@
-const { Account, RpcProvider, json, CallData } = require("starknet");
-const fs = require("fs");
-const path = require("path");
+import { Account, RpcProvider, json, CallData } from "starknet";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const provider = new RpcProvider({
     nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/Nq135DBhsJsBkzaEg2uc3"

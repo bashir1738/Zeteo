@@ -1,6 +1,8 @@
-const { Account, RpcProvider, json, CallData, ec } = require("starknet");
-const fs = require("fs");
-const path = require("path");
+import { Account, RpcProvider, json, CallData } from "starknet";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
     try {
