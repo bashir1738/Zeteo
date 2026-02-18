@@ -9,7 +9,11 @@ const provider = new RpcProvider({
 const privateKey = "***REMOVED***";
 const accountAddress = "***REMOVED***";
 
-const account = new Account(provider, accountAddress, privateKey);
+const account = new Account({
+    provider,
+    address: accountAddress,
+    signer: privateKey,
+});
 
 async function main() {
     try {

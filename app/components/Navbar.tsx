@@ -54,7 +54,9 @@ const Navbar = () => {
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0a0a0a] border border-white/10 rounded-lg">
                                     <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                    <span className="font-mono text-xs text-gray-300">{walletAddress}</span>
+                                    <span className="font-mono text-xs text-gray-300">
+                                        {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={disconnectWallet}
@@ -123,7 +125,9 @@ const Navbar = () => {
                             ) : (
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between px-4 py-3 bg-[#0a0a0a] rounded-lg border border-white/10">
-                                        <span className="font-mono text-sm text-gray-300">{walletAddress}</span>
+                                        <span className="font-mono text-sm text-gray-300">
+                                            {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                                        </span>
                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                     </div>
                                     <button

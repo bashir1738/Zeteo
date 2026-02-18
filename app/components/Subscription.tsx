@@ -44,9 +44,8 @@ const plans = [
 
 const Subscription = () => {
     const { connectWallet, isConnected, account } = useWallet();
-    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [txStatus, setTxStatus] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [statusState, setStatusState] = useState<{ tier: number; message: string } | null>(null);
+    const [loadingTier, setLoadingTier] = useState<number | null>(null);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
 
     useEffect(() => {
@@ -64,32 +63,32 @@ const Subscription = () => {
         }
 
         if (!account) {
-            setTxStatus('No account connected');
+            setStatusState({ tier: tierIndex, message: 'No account connected' });
             return;
         }
 
         try {
-            setIsLoading(true);
-            setTxStatus('Preparing transaction...');
+            setLoadingTier(tierIndex);
+            setStatusState({ tier: tierIndex, message: 'Preparing transaction...' });
 
             const { subscribeToTier } = await import('@/app/lib/contract');
 
-            setTxStatus('Waiting for wallet approval...');
+            setStatusState({ tier: tierIndex, message: 'Waiting for wallet approval...' });
             const result = await subscribeToTier(account, tierIndex + 1);
 
-            setTxStatus('Transaction submitted. Waiting for confirmation...');
+            setStatusState({ tier: tierIndex, message: 'Transaction submitted. Waiting for confirmation...' });
             console.log('Transaction hash:', result.transaction_hash);
 
-            setTxStatus('Success! Redirecting to dashboard...');
+            setStatusState({ tier: tierIndex, message: 'Success! Redirecting to dashboard...' });
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 2000);
         } catch (error) {
             console.error('Subscription error:', error);
-            setTxStatus('Transaction failed. Please try again.');
-            setTimeout(() => setTxStatus(null), 3000);
+            setStatusState({ tier: tierIndex, message: 'Transaction failed. Please try again.' });
+            setTimeout(() => setStatusState(null), 3000);
         } finally {
-            setIsLoading(false);
+            setLoadingTier(null);
         }
     };
 
@@ -118,8 +117,6 @@ const Subscription = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
                     {plans.map((plan, index) => {
-                        const isHovered = hoveredIndex === index;
-
                         return (
                             <motion.div
                                 key={plan.name}
@@ -127,12 +124,10 @@ const Subscription = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: index * 0.2, duration: 0.5 }}
-                                onMouseEnter={() => setHoveredIndex(index)}
-                                onMouseLeave={() => setHoveredIndex(null)}
                                 className="group relative bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 hover:border-purple-500/30 transition-all duration-300"
                             >
                                 {/* Large Background Number */}
-                                <div className="absolute top-4 right-8 text-[120px] font-bold text-white/[0.02] group-hover:text-purple-500/[0.05] transition-colors leading-none select-none pointer-events-none">
+                                <div className="absolute top-4 right-8 text-[120px] font-bold text-white/2 group-hover:text-purple-500/5 transition-colors leading-none select-none pointer-events-none">
                                     {plan.number}
                                 </div>
 
@@ -165,7 +160,7 @@ const Subscription = () => {
                                     <ul className="space-y-4 mb-8 flex-1">
                                         {plan.features.map((feature) => (
                                             <li key={feature} className="flex items-start gap-3 text-gray-400 group-hover:text-gray-300 transition-colors">
-                                                <Check className="w-4 h-4 text-purple-600 mt-1 flex-shrink-0" />
+                                                <Check className="w-4 h-4 text-purple-600 mt-1 shrink-0" />
                                                 <span className="text-sm">{feature}</span>
                                             </li>
                                         ))}
@@ -174,21 +169,21 @@ const Subscription = () => {
                                     {/* CTA Button */}
                                     <button
                                         onClick={() => handleSelect(plan.name, index)}
-                                        disabled={isLoading}
+                                        disabled={loadingTier !== null}
                                         className={clsx(
                                             "w-full py-4 rounded-lg font-bold text-sm transition-all border",
-                                            isLoading && "opacity-50 cursor-not-allowed",
+                                            loadingTier !== null && "opacity-50 cursor-not-allowed",
                                             plan.popular
                                                 ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"
                                                 : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
                                         )}
                                     >
-                                        {isLoading ? 'Processing...' : 'Select Plan'}
+                                        {loadingTier === index ? 'Processing...' : 'Select Plan'}
                                     </button>
 
-                                    {txStatus && (
+                                    {statusState?.tier === index && (
                                         <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-purple-300 text-center">
-                                            {txStatus}
+                                            {statusState.message}
                                         </div>
                                     )}
                                 </div>
