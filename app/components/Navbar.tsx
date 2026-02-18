@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Wallet, LogOut, Menu, X } from 'lucide-react';
 import { useWallet } from '@/app/context/WalletContext';
 
 const Navbar = () => {
+    const router = useRouter();
     const { isConnected, walletAddress, connectWallet, disconnectWallet } = useWallet();
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -42,7 +44,7 @@ const Navbar = () => {
                         {/* Wallet Connect Button */}
                         {!isConnected ? (
                             <button
-                                onClick={connectWallet}
+                                onClick={() => connectWallet(() => router.push('/dashboard'))}
                                 className="flex items-center gap-2 px-4 py-2 bg-white text-black text-sm rounded-lg font-semibold hover:bg-gray-200 transition-all border border-transparent"
                             >
                                 <Wallet className="w-4 h-4" />
@@ -52,7 +54,9 @@ const Navbar = () => {
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0a0a0a] border border-white/10 rounded-lg">
                                     <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                    <span className="font-mono text-xs text-gray-300">{walletAddress}</span>
+                                    <span className="font-mono text-xs text-gray-300">
+                                        {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={disconnectWallet}
@@ -110,8 +114,8 @@ const Navbar = () => {
                             {!isConnected ? (
                                 <button
                                     onClick={() => {
-                                        connectWallet();
                                         setIsOpen(false);
+                                        connectWallet(() => router.push('/dashboard'));
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-black rounded-lg font-semibold text-sm"
                                 >
@@ -121,7 +125,9 @@ const Navbar = () => {
                             ) : (
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between px-4 py-3 bg-[#0a0a0a] rounded-lg border border-white/10">
-                                        <span className="font-mono text-sm text-gray-300">{walletAddress}</span>
+                                        <span className="font-mono text-sm text-gray-300">
+                                            {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                                        </span>
                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                     </div>
                                     <button
