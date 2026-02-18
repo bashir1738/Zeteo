@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight, DollarSign, Bitcoin } from 'lucide-react';
+import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
 // Mock Data for Portfolio Assets
@@ -79,7 +79,7 @@ export default function Portfolio() {
                     </p>
                     <div className="space-y-4">
                         <button
-                            onClick={connectWallet}
+                            onClick={() => connectWallet()}
                             className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors"
                         >
                             Connect Wallet
@@ -204,7 +204,7 @@ export default function Portfolio() {
 
                 {filteredAssets.length === 0 && (
                     <div className="p-12 text-center text-gray-400">
-                        No assets found matching "{filter}"
+                        No assets found matching &quot;{filter}&quot;
                     </div>
                 )}
             </div>
