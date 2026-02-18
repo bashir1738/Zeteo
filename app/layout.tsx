@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { WalletProvider } from "./context/WalletContext";
 import Navbar from "./components/Navbar";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { StarBackground } from "./components/StarBackground";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Zeteo | Crypto Rewards & Benefits",
-  description: "Track your crypto airdrops and maximize your rewards.",
+  title: "Zeteo - Airdrop Tracker",
+  description: "Track and claim your crypto airdrops",
 };
 
 export default function RootLayout({
@@ -26,15 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white selection:bg-purple-500/30`}
-      >
-        <WalletProvider>
+      <body className="antialiased bg-black text-white overflow-x-hidden">
+        <Providers>
+          <StarBackground />
           <Navbar />
-          <main className="pt-16 min-h-screen">
-            {children}
-          </main>
-        </WalletProvider>
+          <main className="overflow-x-hidden">{children}</main>
+        </Providers>
       </body>
     </html>
   );
