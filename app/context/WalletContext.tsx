@@ -1,46 +1,79 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { connect, disconnect, type StarknetWindowObject } from '@starknet-io/get-starknet';
+import { AccountInterface } from 'starknet';
 
 interface WalletContextType {
     isConnected: boolean;
     walletAddress: string | null;
-    connectWallet: () => void;
+    connectWallet: (onConnected?: () => void) => Promise<void>;
     disconnectWallet: () => void;
+    account: AccountInterface | null;
+}
+
+interface LegacyStarknetWindowObject extends StarknetWindowObject {
+    isConnected?: boolean;
+    account?: AccountInterface;
+    selectedAddress?: string;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
-    const [isConnected, setIsConnected] = useState(false);
+    const [account, setAccount] = useState<AccountInterface | null>(null);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-    // Load from local storage on mount to persist state
     useEffect(() => {
-        const storedConnected = localStorage.getItem('walletConnected');
-        if (storedConnected === 'true') {
-            setIsConnected(true);
-            setWalletAddress('0x71C...9A23');
-        }
+        // Check if wallet was previously connected
+        const checkConnection = async () => {
+            try {
+                const wallet = await connect({ modalMode: 'neverAsk' }) as LegacyStarknetWindowObject;
+                const address = wallet?.account?.address || wallet?.selectedAddress;
+
+                if (wallet?.account || (wallet?.isConnected && address)) {
+                    setAccount(wallet.account || null);
+                    setWalletAddress(address || null);
+                }
+            } catch {
+                console.log('No wallet connected');
+            }
+        };
+        checkConnection();
     }, []);
 
-    const connectWallet = () => {
-        // Mock connection
-        setTimeout(() => {
-            setIsConnected(true);
-            setWalletAddress('0x71C...9A23');
-            localStorage.setItem('walletConnected', 'true');
-        }, 500);
+    const connectWallet = async (onConnected?: () => void) => {
+        try {
+            const wallet = await connect({ modalMode: 'alwaysAsk' }) as LegacyStarknetWindowObject;
+            const address = wallet?.account?.address || wallet?.selectedAddress;
+
+            if (wallet?.account || (wallet?.isConnected && address)) {
+                setAccount(wallet.account || null);
+                setWalletAddress(address || null);
+                if (address && onConnected) onConnected();
+            }
+        } catch (error) {
+            console.error('Failed to connect wallet:', error);
+            throw error;
+        }
     };
 
-    const disconnectWallet = () => {
-        setIsConnected(false);
-        setWalletAddress(null);
-        localStorage.removeItem('walletConnected');
+    const disconnectWallet = async () => {
+        try {
+            await disconnect();
+            setAccount(null);
+            setWalletAddress(null);
+        } catch (error) {
+            console.error('Failed to disconnect wallet:', error);
+        }
     };
+
+    const isConnected = !!walletAddress;
 
     return (
-        <WalletContext.Provider value={{ isConnected, walletAddress, connectWallet, disconnectWallet }}>
+        <WalletContext.Provider
+            value={{ isConnected, walletAddress, connectWallet, disconnectWallet, account }}
+        >
             {children}
         </WalletContext.Provider>
     );

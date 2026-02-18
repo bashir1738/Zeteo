@@ -1,13 +1,59 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
 import AirdropTable from '@/app/components/AirdropTable';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
+interface AirdropData {
+    status: string;
+    tier: number;
+    expiry: number;
+    airdrops: Array<{
+        name: string;
+        url: string;
+        amount: string;
+    }>;
+    last_updated: number;
+}
+
 export default function Dashboard() {
-    const { isConnected, connectWallet } = useWallet();
+    const { isConnected, connectWallet, walletAddress } = useWallet();
+    const [airdropData, setAirdropData] = useState<AirdropData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchAirdropData = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch(`/api/airdrop/${walletAddress}`);
+
+                if (response.status === 404) {
+                    setError('No subscription found. Please subscribe first.');
+                    setAirdropData(null);
+                } else if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                } else {
+                    const data = await response.json();
+                    setAirdropData(data);
+                    setError(null);
+                }
+            } catch (err) {
+                console.error('Error fetching airdrop data:', err);
+                setError('Failed to load airdrop data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (isConnected && walletAddress) {
+            fetchAirdropData();
+        } else {
+            setLoading(false);
+        }
+    }, [isConnected, walletAddress]);
 
     if (!isConnected) {
         return (
@@ -22,7 +68,7 @@ export default function Dashboard() {
                     </p>
                     <div className="space-y-4">
                         <button
-                            onClick={connectWallet}
+                            onClick={() => connectWallet()}
                             className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors"
                         >
                             Connect Wallet
@@ -39,6 +85,30 @@ export default function Dashboard() {
         );
     }
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-white text-xl">Loading...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+                    <p className="text-red-400">{error}</p>
+                    <Link href="/" className="mt-4 inline-block text-purple-400 hover:text-purple-300">
+                        Go back to subscribe
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    const tierNames = ['Basic', 'Standard', 'Premium'];
+    const expiryDate = airdropData ? new Date(airdropData.expiry * 1000) : null;
+
     return (
         <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto">
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -54,16 +124,20 @@ export default function Dashboard() {
                 <div className="flex items-center gap-4">
                     <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
                         <span className="text-gray-400 text-sm">Current Plan</span>
-                        <div className="text-xl font-bold text-transparent bg-clip-text bg-purple-400 ">Premium</div>
+                        <div className="text-xl font-bold text-transparent bg-clip-text bg-purple-400">
+                            {airdropData ? tierNames[airdropData.tier - 1] : 'N/A'}
+                        </div>
                     </div>
                     <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                        <span className="text-gray-400 text-sm">Total Value Claimable</span>
-                        <div className="text-xl font-bold text-green-400">$4,250.00</div>
+                        <span className="text-gray-400 text-sm">Expires</span>
+                        <div className="text-xl font-bold text-green-400">
+                            {expiryDate ? expiryDate.toLocaleDateString() : 'N/A'}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <AirdropTable />
+            <AirdropTable airdrops={airdropData?.airdrops || []} />
         </div>
     );
 }

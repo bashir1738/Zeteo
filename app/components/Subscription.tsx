@@ -43,20 +43,53 @@ const plans = [
 ];
 
 const Subscription = () => {
-    const { connectWallet, isConnected } = useWallet();
+    const { connectWallet, isConnected, account } = useWallet();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [txStatus, setTxStatus] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
 
     useEffect(() => {
-        fetchStarkPrice().then(setStarkPrice);
+        const loadPrice = async () => {
+            const price = await fetchStarkPrice();
+            setStarkPrice(price);
+        };
+        loadPrice();
     }, []);
 
-    const handleSelect = (planName: string) => {
+    const handleSelect = async (planName: string, tierIndex: number) => {
         if (!isConnected) {
             connectWallet();
-        } else {
-            console.log(`Selected ${planName}`);
-            window.location.href = '/dashboard';
+            return;
+        }
+
+        if (!account) {
+            setTxStatus('No account connected');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            setTxStatus('Preparing transaction...');
+
+            const { subscribeToTier } = await import('@/app/lib/contract');
+
+            setTxStatus('Waiting for wallet approval...');
+            const result = await subscribeToTier(account, tierIndex + 1);
+
+            setTxStatus('Transaction submitted. Waiting for confirmation...');
+            console.log('Transaction hash:', result.transaction_hash);
+
+            setTxStatus('Success! Redirecting to dashboard...');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 2000);
+        } catch (error) {
+            console.error('Subscription error:', error);
+            setTxStatus('Transaction failed. Please try again.');
+            setTimeout(() => setTxStatus(null), 3000);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -140,16 +173,24 @@ const Subscription = () => {
 
                                     {/* CTA Button */}
                                     <button
-                                        onClick={() => handleSelect(plan.name)}
+                                        onClick={() => handleSelect(plan.name, index)}
+                                        disabled={isLoading}
                                         className={clsx(
                                             "w-full py-4 rounded-lg font-bold text-sm transition-all border",
+                                            isLoading && "opacity-50 cursor-not-allowed",
                                             plan.popular
                                                 ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"
                                                 : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
                                         )}
                                     >
-                                        Select Plan
+                                        {isLoading ? 'Processing...' : 'Select Plan'}
                                     </button>
+
+                                    {txStatus && (
+                                        <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-purple-300 text-center">
+                                            {txStatus}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         );
