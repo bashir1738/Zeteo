@@ -6,12 +6,24 @@ import AirdropTable from '@/app/components/AirdropTable';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
+interface AirdropData {
+    status: string;
+    tier: number;
+    expiry: number;
+    airdrops: Array<{
+        name: string;
+        url: string;
+        amount: string;
+    }>;
+    last_updated: number;
+}
+
 export default function Dashboard() {
     const { isConnected, connectWallet } = useWallet();
 
     if (!isConnected) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+            <div className="min-h-screen flex flex-col items-center justify-center p-4 mt-32 text-center">
                 <div className="max-w-md w-full bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl animate-fade-in-up">
                     <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <ShieldAlert className="w-8 h-8 text-red-500" />
@@ -40,7 +52,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto">
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
@@ -63,7 +75,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <AirdropTable />
+            <AirdropTable airdrops={[]} />
         </div>
     );
 }

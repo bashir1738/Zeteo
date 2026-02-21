@@ -204,7 +204,7 @@ export default function Portfolio() {
 
                 {filteredAssets.length === 0 && (
                     <div className="p-12 text-center text-gray-400">
-                        No assets found matching "{filter}"
+                        No assets found matching &quot;{filter}&quot;
                     </div>
                 )}
             </div>
