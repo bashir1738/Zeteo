@@ -1,7 +1,7 @@
 import { Contract, RpcProvider, AccountInterface } from 'starknet';
 
 // RPC endpoints with fallback
-const getRpcUrl = () => {
+export const getRpcUrl = () => {
     return process.env.NEXT_PUBLIC_STARKNET_RPC_URL
         || process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
         ? 'https://free-rpc.nethermind.io/mainnet-juno'
@@ -14,7 +14,7 @@ interface RpcError {
     message?: string;
 }
 
-const withRetry = async <T>(
+export const withRetry = async <T>(
     fn: () => Promise<T>,
     maxRetries = 3,
     baseDelay = 1000

@@ -1,8 +1,9 @@
-import { Account, RpcProvider, json, CallData } from "starknet";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { Account, RpcProvider, json, CallData } = require("starknet");
+const fs = require("fs");
+const path = require("path");
+
+const __dirname = path.resolve();
 
 const provider = new RpcProvider({
     nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/***REMOVED***"
@@ -54,8 +55,8 @@ async function main() {
         // Deploy the contract
         console.log("🚢 Deploying contract instance...");
         const constructorArgs = CallData.compile([
-            "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+            "0x02514876abc10f016f63112187a5523555ae99b1b0521e16f3f0196238b6935d", // Pragma Oracle Sepolia
+            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  // ETH Token Sepolia
         ]);
 
         const deployResponse = await account.deployContract({

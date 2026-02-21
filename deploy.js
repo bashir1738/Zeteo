@@ -15,7 +15,7 @@ async function main() {
         const privateKey = "***REMOVED***";
         const accountAddress = "***REMOVED***";
 
-        const account = new Account(provider, accountAddress, privateKey);
+        const account = new Account({ provider, address: accountAddress, signer: privateKey });
 
         // Read the compiled contract
         const sierraPath = path.join(__dirname, "target/dev/zeteo_HelloStarknet.contract_class.json");

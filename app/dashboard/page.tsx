@@ -14,7 +14,8 @@ interface AirdropData {
         name: string;
         url: string;
         amount: string;
-        expiry?: number; // Optional expiry timestamp
+        status: string;
+        expiry: number;
     }>;
     last_updated: number;
 }
