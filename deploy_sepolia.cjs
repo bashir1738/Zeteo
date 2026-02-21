@@ -3,27 +3,25 @@ const { Account, RpcProvider, json, CallData } = require("starknet");
 const fs = require("fs");
 const path = require("path");
 
-const __dirname = path.resolve();
-
-const provider = new RpcProvider({
-    nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/***REMOVED***"
-});
-
-const privateKey = "***REMOVED***";
-const accountAddress = "***REMOVED***";
-
-// starknet.js v9 uses options object
-const account = new Account({
-    provider: provider,
-    address: accountAddress,
-    signer: privateKey
-});
-
 async function main() {
     try {
         console.log("🚀 Starting deployment to Starknet Sepolia...");
         console.log("   RPC: Alchemy v0.8 (spec 0.8.1)");
         console.log("   starknet.js: v9\n");
+
+        const provider = new RpcProvider({
+            nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/***REMOVED***"
+        });
+
+        const privateKey = "***REMOVED***";
+        const accountAddress = "***REMOVED***";
+
+        // starknet.js v9 uses options object
+        const account = new Account({
+            provider: provider,
+            address: accountAddress,
+            signer: privateKey
+        });
 
         // Read the compiled contract
         const sierraPath = path.join(__dirname, "contracts/zeteo/target/dev/zeteo_Subscription.contract_class.json");
@@ -38,7 +36,7 @@ async function main() {
         const nonce = await provider.getNonceForAddress(accountAddress);
         console.log("   Account nonce: " + nonce);
 
-        // Use declare directly (not declareIfNot which calls getStarknetVersion and fails)
+        // Use declare directly
         console.log("\n📝 Declaring contract...");
         const declareResponse = await account.declare({
             contract: sierra,
@@ -90,7 +88,6 @@ async function main() {
         console.error("❌ Deployment failed:");
         console.error("   Message:", error.message);
         if (error.baseError) console.error("   RPC Error:", JSON.stringify(error.baseError));
-        if (error.request) console.error("   Method:", error.request.method);
         process.exit(1);
     }
 }
