@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ExternalLink, Clock, ChevronUp, ChevronDown, Rocket, CheckCircle } from 'lucide-react';
-import clsx from 'clsx';
-import { useWallet } from '@/app/context/WalletContext';
+import React from 'react';
+import { ExternalLink, Rocket } from 'lucide-react';
 
 interface Airdrop {
-    id: string;
     name: string;
     url: string;
     amount: string;
@@ -37,36 +34,30 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
         );
     }
 
-
     const sortedAirdrops = [...airdrops].sort((a, b) => a.expiry - b.expiry);
 
     return (
         <div className="w-full overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl">
             {/* Mobile Card View */}
             <div className="md:hidden space-y-4 p-4">
-                {sortedAirdrops.map((airdrop) => (
-                    <div key={airdrop.id} className="bg-white/5 p-4 rounded-xl border border-white/5 space-y-3">
+                {sortedAirdrops.map((airdrop, index) => (
+                    <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/5 space-y-3">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold text-lg text-white">{airdrop.name}</h3>
-                                <span className={clsx(
-                                    "text-xs px-2 py-1 rounded-md font-medium inline-block mt-1 font-mono uppercase tracking-wide",
-                                    airdrop.status === 'Active' ? "bg-green-500/10 text-green-500" :
-                                        airdrop.status === 'Claimed' ? "bg-purple-500/10 text-purple-400" : "bg-red-500/10 text-red-500"
-                                )}>
-                                    {airdrop.status}
-                                </span>
                             </div>
                             <div className="text-right">
                                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Allocation</div>
                                 <div className="font-mono font-bold text-white">{airdrop.amount}</div>
+                                <div className="mt-2 text-xs text-gray-400">
+                                    Exp: {new Date(airdrop.expiry * 1000).toLocaleDateString()}
+                                </div>
                             </div>
                         </div>
 
                         <div className="flex justify-between items-center py-3 border-t border-white/5 mt-2">
                             <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                <Clock className="w-4 h-4" />
-                                <span className="font-mono text-xs">{calculateTimeLeft(airdrop.expiry)}</span>
+                                <span className="font-mono text-xs text-purple-400">{calculateTimeLeft(airdrop.expiry)}</span>
                             </div>
                             <a
                                 href={airdrop.url}
@@ -89,11 +80,12 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
                         <tr className="bg-[#111] text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-white/5">
                             <th className="p-4">Project Name</th>
                             <th className="p-4">Allocation</th>
+                            <th className="p-4">Expires</th>
                             <th className="p-4 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {airdrops.map((airdrop, index) => (
+                        {sortedAirdrops.map((airdrop, index) => (
                             <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
                                 <td className="p-4">
                                     <div className="flex items-center gap-4">
@@ -102,13 +94,20 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
                                         </div>
                                         <div>
                                             <div className="font-bold text-white text-sm">{airdrop.name}</div>
-                                            <div className="text-xs text-gray-500 font-mono mt-0.5">{airdrop.status}</div>
+                                            <div className="text-[10px] text-purple-400/70 font-mono mt-0.5">
+                                                {calculateTimeLeft(airdrop.expiry)}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="p-4">
                                     <span className="font-mono text-sm text-gray-300 bg-[#111] border border-white/5 px-3 py-1.5 rounded-md">
                                         {airdrop.amount}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    <span className="text-sm text-gray-400">
+                                        {new Date(airdrop.expiry * 1000).toLocaleDateString()}
                                     </span>
                                 </td>
                                 <td className="p-4 text-center">

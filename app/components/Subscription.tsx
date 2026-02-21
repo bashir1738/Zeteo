@@ -44,13 +44,16 @@ const plans = [
 
 const Subscription = () => {
     const { connectWallet, isConnected, account } = useWallet();
-    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [txStatus, setTxStatus] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [statusState, setStatusState] = useState<{ tier: number; message: string } | null>(null);
+    const [loadingTier, setLoadingTier] = useState<number | null>(null);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
 
     useEffect(() => {
-        fetchStarkPrice().then(setStarkPrice);
+        const loadPrice = async () => {
+            const price = await fetchStarkPrice();
+            setStarkPrice(price);
+        };
+        loadPrice();
     }, []);
 
     const handleSelect = async (planName: string, tierIndex: number) => {
@@ -60,32 +63,32 @@ const Subscription = () => {
         }
 
         if (!account) {
-            setTxStatus('No account connected');
+            setStatusState({ tier: tierIndex, message: 'No account connected' });
             return;
         }
 
         try {
-            setIsLoading(true);
-            setTxStatus('Preparing transaction...');
+            setLoadingTier(tierIndex);
+            setStatusState({ tier: tierIndex, message: 'Preparing transaction...' });
 
             const { subscribeToTier } = await import('@/app/lib/contract');
 
-            setTxStatus('Waiting for wallet approval...');
+            setStatusState({ tier: tierIndex, message: 'Waiting for wallet approval...' });
             const result = await subscribeToTier(account, tierIndex + 1);
 
-            setTxStatus('Transaction submitted. Waiting for confirmation...');
+            setStatusState({ tier: tierIndex, message: 'Transaction submitted. Waiting for confirmation...' });
             console.log('Transaction hash:', result.transaction_hash);
 
-            setTxStatus('Success! Redirecting to dashboard...');
+            setStatusState({ tier: tierIndex, message: 'Success! Redirecting to dashboard...' });
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 2000);
         } catch (error) {
             console.error('Subscription error:', error);
-            setTxStatus('Transaction failed. Please try again.');
-            setTimeout(() => setTxStatus(null), 3000);
+            setStatusState({ tier: tierIndex, message: 'Transaction failed. Please try again.' });
+            setTimeout(() => setStatusState(null), 3000);
         } finally {
-            setIsLoading(false);
+            setLoadingTier(null);
         }
     };
 
@@ -166,21 +169,21 @@ const Subscription = () => {
                                     {/* CTA Button */}
                                     <button
                                         onClick={() => handleSelect(plan.name, index)}
-                                        disabled={isLoading}
+                                        disabled={loadingTier !== null}
                                         className={clsx(
                                             "w-full py-4 rounded-lg font-bold text-sm transition-all border",
-                                            isLoading && "opacity-50 cursor-not-allowed",
+                                            loadingTier !== null && "opacity-50 cursor-not-allowed",
                                             plan.popular
                                                 ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"
                                                 : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
                                         )}
                                     >
-                                        {isLoading ? 'Processing...' : 'Select Plan'}
+                                        {loadingTier === index ? 'Processing...' : 'Select Plan'}
                                     </button>
 
-                                    {txStatus && (
+                                    {statusState?.tier === index && (
                                         <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-purple-300 text-center">
-                                            {txStatus}
+                                            {statusState.message}
                                         </div>
                                     )}
                                 </div>
