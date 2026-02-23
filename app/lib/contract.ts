@@ -126,6 +126,8 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
             return await contract.call('get_subscription', [userAddress]);
         });
 
+        console.log(`DEBUG: Raw result for ${userAddress}:`, result);
+
         // Handle both new struct return and legacy u64 return
         let expiry = 0;
         let tier = 1; // Default to Basic for legacy
@@ -133,8 +135,14 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
         if (typeof result === 'object' && result !== null) {
             // New struct format: { expiry: bigint, tier: bigint }
             const info = result as any;
-            expiry = Number(info.expiry || 0);
-            tier = Number(info.tier || 0);
+            expiry = Number(info.expiry !== undefined ? info.expiry : (info[0] !== undefined ? info[0] : 0));
+            tier = Number(info.tier !== undefined ? info.tier : (info[1] !== undefined ? info[1] : 1));
+
+            // If we got an object but it's empty or zero, and it looks like a single value was returned
+            if (expiry === 0 && typeof result === 'object' && !('expiry' in result)) {
+                expiry = Number(result); // Fallback to direct conversion if it's a boxed BigInt
+            }
+
             console.log(`Subscription check (New Format): expiry=${expiry}, tier=${tier}`);
         } else {
             // Legacy u64 format: bigint (expiry timestamp)
