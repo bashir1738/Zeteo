@@ -62,25 +62,15 @@ pub mod Subscription {
     impl SubscriptionImpl of super::ISubscription<ContractState> {
         fn subscribe(ref self: ContractState, tier: u8) {
             let caller = get_caller_address();
-            let _oracle_dispatcher = IPragmaOracleDispatcher {
-                contract_address: self.oracle_address.read(),
-            };
+            let oracle_address = self.oracle_address.read();
 
-            // Get ETH price from Pragma (mock integration if address is invalid in tests)
-            // returning (price, decimals, last_updated, num_sources)
-            // let (eth_price, _, _, _) = oracle_dispatcher.get_data_median(ETH_USD_PAIR_ID);
+            // Defensive check: Ensure oracle address is initialized
+            assert(!oracle_address.is_zero(), 'Oracle not initialized');
 
-            // Calculate required ETH based on tier
-            // let required_usd = match tier {
-            //     1 => TIER_1_PRICE_USD,
-            //     2 => TIER_2_PRICE_USD,
-            //     3 => TIER_3_PRICE_USD,
-            //     _ => 0, // Invalid tier
-            // };
-            // assert(required_usd > 0, 'Invalid tier');
+            let _oracle_dispatcher = IPragmaOracleDispatcher { contract_address: oracle_address };
 
-            // Logic to transfer ETH would go here.
-            // For this task, we focus on the logic and event emission.
+            // Logical check for tier
+            assert(tier >= 1 && tier <= 3, 'Invalid tier');
 
             let duration = 30 * 24 * 60 * 60; // 30 days
             let current_expiry = self.subscriptions.entry(caller).read();
