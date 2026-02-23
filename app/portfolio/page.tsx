@@ -1,67 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight } from 'lucide-react';
+import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight, RefreshCw, Globe, FlaskConical } from 'lucide-react';
 import Link from 'next/link';
-
-// Mock Data for Portfolio Assets
-const mockAssets = [
-    {
-        id: '1',
-        name: 'Ethereum',
-        symbol: 'ETH',
-        balance: '1.45',
-        price: 3250.50,
-        change24h: 2.5,
-        icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=026'
-    },
-    {
-        id: '2',
-        name: 'Bitcoin',
-        symbol: 'BTC',
-        balance: '0.12',
-        price: 64200.00,
-        change24h: -1.2,
-        icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=026'
-    },
-    {
-        id: '3',
-        name: 'Solana',
-        symbol: 'SOL',
-        balance: '150.00',
-        price: 145.20,
-        change24h: 5.8,
-        icon: 'https://cryptologos.cc/logos/solana-sol-logo.png?v=026'
-    },
-    {
-        id: '4',
-        name: 'USDC',
-        symbol: 'USDC',
-        balance: '2500.00',
-        price: 1.00,
-        change24h: 0.01,
-        icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=026'
-    },
-    {
-        id: '5',
-        name: 'Starknet',
-        symbol: 'STRK',
-        balance: '1000.00',
-        price: 1.85,
-        change24h: 12.4,
-        icon: 'https://cryptologos.cc/logos/starknet-token-strk-logo.png?v=026'
-    }
-];
+import { TOKENS, Token } from '@/app/lib/tokens';
+import { fetchTokenBalances } from '@/app/lib/balance';
 
 export default function Portfolio() {
-    const { isConnected, connectWallet } = useWallet();
+    const { isConnected, connectWallet, walletAddress, network, switchNetwork } = useWallet();
     const [filter, setFilter] = useState('');
+    const [assets, setAssets] = useState<(Token & { balance: string; price: number; change24h: number })[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    const loadBalances = useCallback(async () => {
+        if (!walletAddress) return;
+
+        setIsLoading(true);
+        try {
+            const tokensForNetwork = TOKENS[network];
+            const balances = await fetchTokenBalances(walletAddress, tokensForNetwork, network);
+            setAssets(balances);
+            setLastUpdated(new Date());
+        } catch (error) {
+            console.error('Failed to load portfolio balances:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [walletAddress, network]);
+
+    useEffect(() => {
+        if (isConnected && walletAddress) {
+            loadBalances();
+        } else {
+            setAssets([]);
+        }
+    }, [isConnected, walletAddress, loadBalances]);
 
     // Calculate total value
-    const totalValue = mockAssets.reduce((acc, asset) => acc + (parseFloat(asset.balance) * asset.price), 0);
+    const totalValue = assets.reduce((acc, asset) => acc + (parseFloat(asset.balance) * asset.price), 0);
 
-    const filteredAssets = mockAssets.filter(asset =>
+    const filteredAssets = assets.filter(asset =>
         asset.name.toLowerCase().includes(filter.toLowerCase()) ||
         asset.symbol.toLowerCase().includes(filter.toLowerCase())
     );
@@ -136,75 +116,145 @@ export default function Portfolio() {
                 </div>
             </div>
 
-            {/* Assets Table */}
+            {/* Assets Table Section */}
             <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h2 className="text-xl font-bold text-white">Your Assets</h2>
-                    <input
-                        type="text"
-                        placeholder="Search assets..."
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 w-full md:w-64"
-                    />
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-xl font-bold text-white">Your Assets</h2>
+                        {lastUpdated && (
+                            <span className="text-xs text-gray-500">
+                                Last updated: {lastUpdated.toLocaleTimeString()}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Network Switcher */}
+                        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                            <button
+                                onClick={() => switchNetwork('mainnet')}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${network === 'mainnet'
+                                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                                    : 'text-gray-400 hover:text-gray-200'
+                                    }`}
+                            >
+                                <Globe className="w-3.5 h-3.5" />
+                                Mainnet
+                            </button>
+                            <button
+                                onClick={() => switchNetwork('sepolia')}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${network === 'sepolia'
+                                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                                    : 'text-gray-400 hover:text-gray-200'
+                                    }`}
+                            >
+                                <FlaskConical className="w-3.5 h-3.5" />
+                                Sepolia
+                            </button>
+                        </div>
+
+                        <div className="h-8 w-px bg-white/10 hidden md:block mx-1"></div>
+
+                        <div className="relative grow md:grow-0">
+                            <input
+                                type="text"
+                                placeholder="Search assets..."
+                                value={filter}
+                                onChange={(e) => setFilter(e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 w-full md:w-64"
+                            />
+                        </div>
+
+                        <button
+                            onClick={() => loadBalances()}
+                            disabled={isLoading}
+                            className={`p-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all ${isLoading ? 'animate-spin' : ''}`}
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider font-semibold">
-                                <th className="p-4">Asset</th>
-                                <th className="p-4 text-right">Price</th>
-                                <th className="p-4 text-right">Balance</th>
-                                <th className="p-4 text-right">Value</th>
-                                <th className="p-4 text-right">24h Change</th>
-                                <th className="p-4 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {filteredAssets.map((asset) => (
-                                <tr key={asset.id} className="hover:bg-white/2 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold overflow-hidden">
-                                                {/* Fallback for icon */}
-                                                <span className="text-white">{asset.symbol[0]}</span>
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-white">{asset.name}</div>
-                                                <div className="text-xs text-gray-500">{asset.symbol}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-right font-mono text-gray-300">
-                                        ${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td className="p-4 text-right font-mono text-white">
-                                        {asset.balance} <span className="text-gray-500 text-xs">{asset.symbol}</span>
-                                    </td>
-                                    <td className="p-4 text-right font-bold font-mono text-white">
-                                        ${(parseFloat(asset.balance) * asset.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${asset.change24h >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                            {asset.change24h >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                            {Math.abs(asset.change24h)}%
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Trade">
-                                            <ArrowUpRight className="w-4 h-4" />
-                                        </button>
-                                    </td>
+                <div className="overflow-x-auto min-h-[300px]">
+                    {isLoading && assets.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 gap-4">
+                            <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+                            <p className="text-gray-400 font-medium">Fetching your assets on {network}...</p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                                    <th className="p-4">Asset</th>
+                                    <th className="p-4 text-right">Price</th>
+                                    <th className="p-4 text-right">Balance</th>
+                                    <th className="p-4 text-right">Value</th>
+                                    <th className="p-4 text-right">24h Change</th>
+                                    <th className="p-4 text-center">Action</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {filteredAssets.map((asset) => (
+                                    <tr key={asset.id} className="hover:bg-white/2 transition-colors">
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold overflow-hidden p-1.5">
+                                                    {asset.icon ? (
+                                                        /* eslint-disable-next-line @next/next/no-img-element */
+                                                        <img src={asset.icon} alt={asset.symbol} className="w-full h-full object-contain" />
+                                                    ) : (
+                                                        <span className="text-white">{asset.symbol[0]}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-white">{asset.name}</div>
+                                                    <div className="text-xs text-gray-500">{asset.symbol}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-right font-mono text-gray-300">
+                                            {asset.price > 0 ? `$${asset.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '-'}
+                                        </td>
+                                        <td className="p-4 text-right font-mono text-white">
+                                            {asset.balance} <span className="text-gray-500 text-xs">{asset.symbol}</span>
+                                        </td>
+                                        <td className="p-4 text-right font-bold font-mono text-white">
+                                            {asset.price > 0
+                                                ? `$${(parseFloat(asset.balance) * asset.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                                                : '-'}
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            {asset.price > 0 ? (
+                                                <div className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${asset.change24h >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                    {asset.change24h >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                                    {Math.abs(asset.change24h)}%
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-600">-</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Trade">
+                                                <ArrowUpRight className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
 
-                {filteredAssets.length === 0 && (
+                {!isLoading && filteredAssets.length === 0 && (
                     <div className="p-12 text-center text-gray-400">
-                        No assets found matching &quot;{filter}&quot;
+                        {filter ? (
+                            <>No assets found matching &quot;{filter}&quot;</>
+                        ) : (
+                            <div className="flex flex-col items-center gap-3">
+                                <Wallet className="w-8 h-8 opacity-20" />
+                                <p>No assets found on {network} for this wallet.</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
