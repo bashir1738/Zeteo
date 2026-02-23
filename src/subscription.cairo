@@ -14,6 +14,7 @@ pub trait IPragmaOracle<TContractState> {
 
 #[starknet::contract]
 pub mod Subscription {
+    use core::num::traits::Zero;
     use starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
