@@ -128,27 +128,38 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
 
         console.log(`DEBUG: Raw result for ${userAddress}:`, result);
 
-        // Handle both new struct return and legacy u64 return
+        // Handle different Starknet.js return formats:
         let expiry = 0;
-        let tier = 1; // Default to Basic for legacy
+        let tier = 1;
 
         if (typeof result === 'object' && result !== null) {
-            // New struct format: { expiry: bigint, tier: bigint }
             const info = result as any;
-            expiry = Number(info.expiry !== undefined ? info.expiry : (info[0] !== undefined ? info[0] : 0));
-            tier = Number(info.tier !== undefined ? info.tier : (info[1] !== undefined ? info[1] : 1));
 
-            // If we got an object but it's empty or zero, and it looks like a single value was returned
-            if (expiry === 0 && typeof result === 'object' && !('expiry' in result)) {
-                expiry = Number(result); // Fallback to direct conversion if it's a boxed BigInt
+            // 1. Check for explicit struct fields (Ideal new format)
+            if (info.expiry !== undefined) {
+                expiry = Number(info.expiry);
+                tier = Number(info.tier !== undefined ? info.tier : 1);
             }
-
-            console.log(`Subscription check (New Format): expiry=${expiry}, tier=${tier}`);
+            // 2. Check for wrapped result: { SubscriptionInfo: 1234n }
+            else if (info.SubscriptionInfo !== undefined) {
+                expiry = Number(info.SubscriptionInfo);
+                tier = 1; // Default for legacy
+            }
+            // 3. Check for array-like result: [expiry, tier]
+            else if (info[0] !== undefined) {
+                expiry = Number(info[0]);
+                tier = Number(info[1] !== undefined ? info[1] : 1);
+            }
+            // 4. Final fallback for other object types
+            else {
+                expiry = Number(result || 0);
+            }
         } else {
-            // Legacy u64 format: bigint (expiry timestamp)
+            // 5. Direct legacy result (bigint or number)
             expiry = Number(result || 0);
-            console.log(`Subscription check (Legacy Format): expiry=${expiry}`);
         }
+
+        console.log(`Parsed Subscription: expiry=${expiry}, tier=${tier}`);
 
         return { expiry, tier };
     } catch (error) {
