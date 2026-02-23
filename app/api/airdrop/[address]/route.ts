@@ -2,7 +2,8 @@ import { createClient } from 'redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSubscription } from '@/app/lib/contract';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_URL = process.env.REDIS_URL || process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 export async function GET(
     request: NextRequest,
@@ -11,16 +12,26 @@ export async function GET(
     try {
         const { address } = await params;
 
-        // Fetch user data from Redis (Optional)
+        // Fetch user data from Redis (Optional, and skip if default localhost on prod)
         let redisData = null;
-        try {
-            const redisClient = createClient({ url: REDIS_URL });
-            await redisClient.connect();
-            const key = `user:${address}:data`;
-            redisData = await redisClient.get(key);
-            await redisClient.disconnect();
-        } catch (redisError) {
-            console.warn('Redis unavailable, falling back to contract check:', redisError);
+        const isDefaultRedis = REDIS_URL.includes('localhost') || REDIS_URL.includes('127.0.0.1');
+
+        if (!IS_PROD || !isDefaultRedis) {
+            try {
+                const redisClient = createClient({
+                    url: REDIS_URL,
+                    socket: {
+                        connectTimeout: 2000 // 2 second timeout for Vercel functions
+                    }
+                });
+                await redisClient.connect();
+                const key = `user:${address}:data`;
+                redisData = await redisClient.get(key);
+                await redisClient.disconnect();
+            } catch (redisError: unknown) {
+                const message = redisError instanceof Error ? redisError.message : String(redisError);
+                console.warn('Redis unavailable, falling back to contract check:', message);
+            }
         }
 
         if (redisData) {
@@ -58,15 +69,20 @@ export async function GET(
                     ]
                 };
                 return NextResponse.json(mockData);
+            } else {
+                return NextResponse.json(
+                    { error: 'No active subscription found. Please subscribe to access the dashboard.', code: 'NO_SUBSCRIPTION' },
+                    { status: 404 }
+                );
             }
-        } catch (contractError) {
+        } catch (contractError: unknown) {
             console.error('Contract check failed:', contractError);
+            const message = contractError instanceof Error ? contractError.message : String(contractError);
+            return NextResponse.json(
+                { error: `Contract interaction failed: ${message}`, code: 'CONTRACT_ERROR' },
+                { status: 500 }
+            );
         }
-
-        return NextResponse.json(
-            { error: 'No subscription found for this address' },
-            { status: 404 }
-        );
     } catch (error) {
         console.error('API error:', error);
         return NextResponse.json(
