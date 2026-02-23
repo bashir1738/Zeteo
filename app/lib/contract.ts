@@ -59,7 +59,16 @@ export const SUBSCRIPTION_ABI = [
         name: 'get_subscription',
         type: 'function',
         inputs: [{ name: 'user', type: 'core::starknet::contract_address::ContractAddress' }],
-        outputs: [{ type: 'core::integer::u64' }],
+        outputs: [
+            {
+                type: 'struct',
+                name: 'SubscriptionInfo',
+                members: [
+                    { name: 'expiry', type: 'core::integer::u64' },
+                    { name: 'tier', type: 'core::integer::u8' }
+                ]
+            }
+        ],
         state_mutability: 'view',
     },
     {
@@ -100,7 +109,7 @@ export async function subscribeToTier(account: AccountInterface, tier: number) {
     }
 }
 
-export async function getSubscription(userAddress: string): Promise<number> {
+export async function getSubscription(userAddress: string): Promise<{ expiry: number; tier: number }> {
     const provider = new RpcProvider({
         nodeUrl: getRpcUrl(),
     });
@@ -117,13 +126,25 @@ export async function getSubscription(userAddress: string): Promise<number> {
             return await contract.call('get_subscription', [userAddress]);
         });
 
-        // Handle both object and direct value returns
-        const expiry = typeof result === 'object' && result !== null ? (result as any).expiry : result;
-        console.log(`Subscription check for ${userAddress}: result=${result}, expiry=${expiry}`);
+        // Handle both new struct return and legacy u64 return
+        let expiry = 0;
+        let tier = 1; // Default to Basic for legacy
 
-        return Number(expiry || 0);
+        if (typeof result === 'object' && result !== null) {
+            // New struct format: { expiry: bigint, tier: bigint }
+            const info = result as any;
+            expiry = Number(info.expiry || 0);
+            tier = Number(info.tier || 0);
+            console.log(`Subscription check (New Format): expiry=${expiry}, tier=${tier}`);
+        } else {
+            // Legacy u64 format: bigint (expiry timestamp)
+            expiry = Number(result || 0);
+            console.log(`Subscription check (Legacy Format): expiry=${expiry}`);
+        }
+
+        return { expiry, tier };
     } catch (error) {
         console.error('Get subscription error:', error);
-        return 0;
+        return { expiry: 0, tier: 0 };
     }
 }
