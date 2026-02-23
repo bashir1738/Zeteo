@@ -46,7 +46,9 @@ export async function fetchTokenBalances(
     }
 
     const balancePromises = tokens.map(async (token) => {
+        const nodeUrl = getRpcUrl(network);
         try {
+            console.log(`Fetching balance for ${token.symbol} at ${token.address} on ${nodeUrl}`);
             const contract = new Contract({
                 abi: ERC20_ABI,
                 address: token.address,
@@ -73,8 +75,8 @@ export async function fetchTokenBalances(
                 price: priceData?.usd || 0,
                 change24h: priceData?.usd_24h_change || 0
             };
-        } catch (error) {
-            console.error(`Error fetching balance for ${token.symbol}:`, error);
+        } catch (error: any) {
+            console.error(`Error fetching balance for ${token.symbol} (${token.address}) on ${nodeUrl}:`, error?.message || error);
             return {
                 ...token,
                 balance: '0',

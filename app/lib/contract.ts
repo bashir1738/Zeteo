@@ -4,15 +4,17 @@ import { Contract, RpcProvider, AccountInterface } from 'starknet';
 export const getRpcUrl = (network?: 'mainnet' | 'sepolia') => {
     const apiKey = process.env.NEXT_PUBLIC_INFURA_STARKNET_API_KEY || '1393f762ef174747b0ff964dfbbfe8ab';
 
-    // If a specific network is requested, return the corresponding Infura URL
+    // 1. If an explicit network is requested, use Infura for that network
     if (network === 'mainnet') return `https://starknet-mainnet.infura.io/v3/${apiKey}`;
     if (network === 'sepolia') return `https://starknet-sepolia.infura.io/v3/${apiKey}`;
 
-    // Fallback to environment variable if explicitly set, otherwise use Infura based on global network setting
-    return process.env.NEXT_PUBLIC_STARKNET_RPC_URL
-        || (process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
-            ? `https://starknet-mainnet.infura.io/v3/${apiKey}`
-            : `https://starknet-sepolia.infura.io/v3/${apiKey}`);
+    // 2. If no network is requested, check the general RPC override
+    if (process.env.NEXT_PUBLIC_STARKNET_RPC_URL) return process.env.NEXT_PUBLIC_STARKNET_RPC_URL;
+
+    // 3. Fallback to Infura based on the global network environment variable
+    return process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
+        ? `https://starknet-mainnet.infura.io/v3/${apiKey}`
+        : `https://starknet-sepolia.infura.io/v3/${apiKey}`;
 };
 
 // Retry helper with exponential backoff
