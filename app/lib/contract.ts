@@ -72,7 +72,7 @@ export const SUBSCRIPTION_ABI = [
 ];
 
 export const CONTRACT_ADDRESS =
-    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0';
+    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x70cf4464e7d360f6ca6f9d2221c16e49c5867923965b11ac542ae56324265f3';
 
 export async function subscribeToTier(account: AccountInterface, tier: number) {
     if (!account) throw new Error('No account connected');
@@ -116,7 +116,12 @@ export async function getSubscription(userAddress: string): Promise<number> {
         const result = await withRetry(async () => {
             return await contract.call('get_subscription', [userAddress]);
         });
-        return Number(result);
+
+        // Handle both object and direct value returns
+        const expiry = typeof result === 'object' && result !== null ? (result as any).expiry : result;
+        console.log(`Subscription check for ${userAddress}: result=${result}, expiry=${expiry}`);
+
+        return Number(expiry || 0);
     } catch (error) {
         console.error('Get subscription error:', error);
         return 0;
