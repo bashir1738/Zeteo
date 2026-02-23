@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { connect, disconnect, type StarknetWindowObject } from '@starknet-io/get-starknet';
-import { Account, AccountInterface, RpcProvider } from 'starknet';
+import { AccountInterface, RpcProvider } from 'starknet';
 import { withRetry, getRpcUrl } from '@/app/lib/contract';
 
 interface WalletContextType {
@@ -11,6 +11,8 @@ interface WalletContextType {
     connectWallet: (onConnected?: () => void) => Promise<void>;
     disconnectWallet: () => void;
     account: AccountInterface | null;
+    network: 'mainnet' | 'sepolia';
+    switchNetwork: (newNetwork: 'mainnet' | 'sepolia') => void;
 }
 
 // Type for wallet with additional properties
@@ -27,9 +29,10 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     const [account, setAccount] = useState<AccountInterface | null>(null);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
     const [isConnectedState, setIsConnectedState] = useState(false);
+    const [network, setNetwork] = useState<'mainnet' | 'sepolia'>('sepolia');
 
     // Create AccountInterface from wallet
-    const createAccountFromWallet = async (wallet: ExtendedStarknetWindow): Promise<AccountInterface | null> => {
+    const createAccountFromWallet = useCallback(async (wallet: ExtendedStarknetWindow): Promise<AccountInterface | null> => {
         // Check if wallet has enable method
         if (typeof wallet.enable === 'function') {
             await wallet.enable();
@@ -41,18 +44,20 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (wallet.account as any).provider = await withRetry(async () => {
                 return new RpcProvider({
-                    nodeUrl: getRpcUrl(),
+                    nodeUrl: getRpcUrl(network),
                 });
             });
             return wallet.account;
         }
 
         return null;
-    };
+    }, [network]);
 
     useEffect(() => {
-        // Check if wallet was previously connected
         const checkConnection = async () => {
+            // Only attempt silent reconnect if user previously connected
+            if (localStorage.getItem('starknet_connected') !== 'true') return;
+
             try {
                 const wallet = await connect({ modalMode: 'neverAsk' }) as ExtendedStarknetWindow;
 
@@ -60,28 +65,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
 
-                // Prioritize wallet.account if available (standard and reliable)
-                if (wallet.account) {
-                    const provider = await withRetry(async () => {
-                        return new RpcProvider({
-                            nodeUrl: getRpcUrl(),
-                        });
-                    });
-
-                    // @ts-expect-error - wallet.account.signer is compatible with Account constructor
-                    const robustAccount = new Account(provider, wallet.account.address, wallet.account.signer);
-
-                    setAccount(robustAccount);
-                    setWalletAddress(wallet.account.address);
-                    setIsConnectedState(true);
-                    return;
-                }
-
                 const walletAccount = await createAccountFromWallet(wallet);
 
                 if (walletAccount) {
                     setAccount(walletAccount);
-                    setWalletAddress(walletAccount.address);
+                    setWalletAddress(walletAccount.address || wallet.selectedAddress || null);
                     setIsConnectedState(true);
                 } else if (wallet.selectedAddress) {
                     setWalletAddress(wallet.selectedAddress);
@@ -92,7 +80,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             }
         };
         checkConnection();
-    }, []);
+    }, [createAccountFromWallet, network]);
 
     const connectWallet = useCallback(async (onConnected?: () => void) => {
         try {
@@ -104,32 +92,17 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
             const walletExtended = wallet as ExtendedStarknetWindow;
 
-            if (walletExtended.account) {
-                const provider = await withRetry(async () => {
-                    return new RpcProvider({
-                        nodeUrl: getRpcUrl(),
-                    });
-                });
-
-                // @ts-expect-error - wallet.account.signer is compatible with Account constructor
-                const robustAccount = new Account(provider, walletExtended.account.address, walletExtended.account.signer);
-
-                setAccount(robustAccount);
-                setWalletAddress(walletExtended.account.address);
-                setIsConnectedState(true);
-                if (onConnected) onConnected();
-                return;
-            }
-
             const walletAccount = await createAccountFromWallet(walletExtended);
 
             if (walletAccount) {
                 setAccount(walletAccount);
-                setWalletAddress(walletAccount.address);
+                setWalletAddress(walletAccount.address || walletExtended.selectedAddress || null);
                 setIsConnectedState(true);
+                localStorage.setItem('starknet_connected', 'true');
             } else if (walletExtended.selectedAddress) {
                 setWalletAddress(walletExtended.selectedAddress);
                 setIsConnectedState(true);
+                localStorage.setItem('starknet_connected', 'true');
             } else {
                 throw new Error('Failed to get wallet address');
             }
@@ -141,7 +114,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             console.error('Failed to connect wallet:', error);
             throw error;
         }
-    }, []);
+    }, [createAccountFromWallet]);
 
     const disconnectWallet = useCallback(async () => {
         try {
@@ -149,16 +122,23 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             setAccount(null);
             setWalletAddress(null);
             setIsConnectedState(false);
+            localStorage.removeItem('starknet_connected');
         } catch (error) {
             console.error('Failed to disconnect wallet:', error);
         }
+    }, []);
+
+    const switchNetwork = useCallback((newNetwork: 'mainnet' | 'sepolia') => {
+        setNetwork(newNetwork);
+        // In a more robust implementation, we might want to reload the page or 
+        // re-initialize the provider here. For balance tracking, updating state is enough.
     }, []);
 
     const isConnected = isConnectedState || !!walletAddress;
 
     return (
         <WalletContext.Provider
-            value={{ isConnected, walletAddress, connectWallet, disconnectWallet, account }}
+            value={{ isConnected, walletAddress, connectWallet, disconnectWallet, account, network, switchNetwork }}
         >
             {children}
         </WalletContext.Provider>

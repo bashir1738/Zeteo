@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { useWallet } from '@/app/context/WalletContext';
 import { motion } from 'framer-motion';
 import { fetchStarkPrice } from '@/app/utils/price';
+import { useRouter } from 'next/navigation';
 
 import BackgroundAnimation from './BackgroundAnimation';
 
@@ -44,6 +45,7 @@ const plans = [
 
 const Subscription = () => {
     const { connectWallet, isConnected, account } = useWallet();
+    const router = useRouter();
     const [statusState, setStatusState] = useState<{ tier: number; message: string } | null>(null);
     const [loadingTier, setLoadingTier] = useState<number | null>(null);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
@@ -81,7 +83,7 @@ const Subscription = () => {
 
             setStatusState({ tier: tierIndex, message: 'Success! Redirecting to dashboard...' });
             setTimeout(() => {
-                window.location.href = '/dashboard';
+                router.push('/dashboard');
             }, 2000);
         } catch (error) {
             console.error('Subscription error:', error);

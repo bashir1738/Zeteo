@@ -1,11 +1,18 @@
 import { Contract, RpcProvider, AccountInterface } from 'starknet';
 
 // RPC endpoints with fallback
-export const getRpcUrl = () => {
+export const getRpcUrl = (network?: 'mainnet' | 'sepolia') => {
+    const apiKey = process.env.NEXT_PUBLIC_INFURA_STARKNET_API_KEY || '***REMOVED***';
+
+    // If a specific network is requested, return the corresponding Infura URL
+    if (network === 'mainnet') return `https://starknet-mainnet.infura.io/v3/${apiKey}`;
+    if (network === 'sepolia') return `https://starknet-sepolia.infura.io/v3/${apiKey}`;
+
+    // Fallback to environment variable if explicitly set, otherwise use Infura based on global network setting
     return process.env.NEXT_PUBLIC_STARKNET_RPC_URL
-        || process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
-        ? 'https://free-rpc.nethermind.io/mainnet-juno'
-        : 'https://free-rpc.nethermind.io/sepolia-juno';
+        || (process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
+            ? `https://starknet-mainnet.infura.io/v3/${apiKey}`
+            : `https://starknet-sepolia.infura.io/v3/${apiKey}`);
 };
 
 // Retry helper with exponential backoff
