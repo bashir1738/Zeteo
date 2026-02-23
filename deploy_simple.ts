@@ -50,7 +50,7 @@ async function main() {
         console.log("🚢 Deploying contract instance...");
         // Constructor args: oracle_address, eth_address
         const constructorArgs = CallData.compile([
-            "0x0000000000000000000000000000000000000000000000000000000000000000", // placeholder oracle
+            "0x02514876abc10f016f63112187a5523555ae99b1b0521e16f3f0196238b6935d", // Pragma Oracle Sepolia
             "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  // ETH on Starknet Sepolia
         ]);
 
