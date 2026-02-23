@@ -32,11 +32,10 @@ export default function Dashboard() {
                 setLoading(true);
                 const response = await fetch(`/api/airdrop/${walletAddress}`);
 
-                if (response.status === 404) {
-                    setError('No subscription found. Please subscribe first.');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    setError(errorData.error || 'Failed to fetch airdrop data');
                     setAirdropData(null);
-                } else if (!response.ok) {
-                    throw new Error('Failed to fetch data');
                 } else {
                     const data = await response.json();
                     setAirdropData(data);

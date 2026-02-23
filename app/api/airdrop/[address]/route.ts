@@ -1,12 +1,9 @@
 import { createClient } from 'redis';
 import { NextRequest, NextResponse } from 'next/server';
-import { Contract, RpcProvider } from 'starknet';
-import { SUBSCRIPTION_ABI, CONTRACT_ADDRESS } from '@/app/lib/contract';
+import { getSubscription } from '@/app/lib/contract';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const RPC_URL = process.env.NEXT_PUBLIC_STARKNET_RPC_URL || (process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
-    ? 'https://starknet-mainnet.public.blastapi.io/rpc/v0_7'
-    : 'https://free-rpc.nethermind.io/sepolia-juno');
+const REDIS_URL = process.env.REDIS_URL || process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 export async function GET(
     request: NextRequest,
@@ -15,73 +12,77 @@ export async function GET(
     try {
         const { address } = await params;
 
-        // Connect to Redis
-        const redisClient = createClient({ url: REDIS_URL });
-        await redisClient.connect();
+        // Fetch user data from Redis (Optional, and skip if default localhost on prod)
+        let redisData = null;
+        const isDefaultRedis = REDIS_URL.includes('localhost') || REDIS_URL.includes('127.0.0.1');
 
-        // Fetch user data
-        const key = `user:${address}:data`;
-        const data = await redisClient.get(key);
+        if (!IS_PROD || !isDefaultRedis) {
+            try {
+                const redisClient = createClient({
+                    url: REDIS_URL,
+                    socket: {
+                        connectTimeout: 2000 // 2 second timeout for Vercel functions
+                    }
+                });
+                await redisClient.connect();
+                const key = `user:${address}:data`;
+                redisData = await redisClient.get(key);
+                await redisClient.disconnect();
+            } catch (redisError: unknown) {
+                const message = redisError instanceof Error ? redisError.message : String(redisError);
+                console.warn('Redis unavailable, falling back to contract check:', message);
+            }
+        }
 
-        await redisClient.disconnect();
-
-        if (data) {
-            const userData = JSON.parse(data);
+        if (redisData) {
+            const userData = JSON.parse(redisData);
             return NextResponse.json(userData);
         }
 
-        // Fallback: Check smart contract directly if not in Redis
-        console.log(`No Redis data for ${address}, checking contract...`);
-        const provider = new RpcProvider({ nodeUrl: RPC_URL });
-        const contract = new Contract({
-            abi: SUBSCRIPTION_ABI,
-            address: CONTRACT_ADDRESS,
-            providerOrAccount: provider,
-        });
-
+        // Check smart contract directly
+        console.log(`Checking subscription for ${address} on contract...`);
         try {
-            // Get subscription expiry
-            const subscription = await contract.get_subscription(address);
-            const expiryTimestamp = Number(subscription);
+            const expiryTimestamp = await getSubscription(address);
             const now = Math.floor(Date.now() / 1000);
 
             if (expiryTimestamp > now) {
                 console.log(`User ${address} has active subscription (Expiry: ${expiryTimestamp})`);
-                // Valid subscription found! Return mock data with real expiry
-                // Since contract doesn't store tier, we default to Premium (3) for now
                 const mockData = {
                     status: 'Active',
-                    tier: 3, // Default to Premium
+                    tier: 3,
                     expiry: expiryTimestamp,
                     airdrops: [
                         {
                             name: 'Zeteo Early Adopter',
+                            url: 'https://zeteo.io/claim',
                             amount: '500 ZET',
                             status: 'Claimable',
-                            expiry: now + 30 * 24 * 60 * 60, // 30 days from now
-                            url: 'https://zeteo.io/claim'
+                            expiry: now + 30 * 24 * 60 * 60,
                         },
                         {
                             name: 'Starknet Odyssey',
+                            url: 'https://starknet.io/odyssey',
                             amount: '100 STRK',
                             status: 'Pending',
-                            expiry: now + 45 * 24 * 60 * 60, // 45 days from now
-                            url: 'https://starknet.io/odyssey'
+                            expiry: now + 45 * 24 * 60 * 60,
                         }
                     ]
                 };
-
-                // TODO: Save to Redis here for future requests
                 return NextResponse.json(mockData);
+            } else {
+                return NextResponse.json(
+                    { error: 'No active subscription found. Please subscribe to access the dashboard.', code: 'NO_SUBSCRIPTION' },
+                    { status: 404 }
+                );
             }
-        } catch (contractError) {
+        } catch (contractError: unknown) {
             console.error('Contract check failed:', contractError);
+            const message = contractError instanceof Error ? contractError.message : String(contractError);
+            return NextResponse.json(
+                { error: `Contract interaction failed: ${message}`, code: 'CONTRACT_ERROR' },
+                { status: 500 }
+            );
         }
-
-        return NextResponse.json(
-            { error: 'No subscription found for this address' },
-            { status: 404 }
-        );
     } catch (error) {
         console.error('API error:', error);
         return NextResponse.json(
