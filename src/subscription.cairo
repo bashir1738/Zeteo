@@ -54,6 +54,8 @@ pub mod Subscription {
     fn constructor(
         ref self: ContractState, oracle_address: ContractAddress, eth_address: ContractAddress,
     ) {
+        assert(!oracle_address.is_zero(), 'Oracle address cannot be 0');
+        assert(!eth_address.is_zero(), 'ETH address cannot be 0');
         self.owner.write(get_caller_address());
         self.oracle_address.write(oracle_address);
         self.eth_token_address.write(eth_address);
