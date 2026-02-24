@@ -85,7 +85,7 @@ export const SUBSCRIPTION_ABI = [
 ];
 
 export const CONTRACT_ADDRESS =
-    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x70cf4464e7d360f6ca6f9d2221c16e49c5867923965b11ac542ae56324265f3';
+    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x1a5ea2b21b844511b0efea856b2058f0bff5c925a88328828f6dd158368fcdd';
 
 export async function subscribeToTier(account: AccountInterface, tier: number) {
     if (!account) throw new Error('No account connected');
