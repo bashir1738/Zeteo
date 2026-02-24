@@ -13,6 +13,7 @@ export default function Portfolio() {
     const [assets, setAssets] = useState<(Token & { balance: string; price: number; change24h: number })[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [subscription, setSubscription] = useState<{ tier: number; expiry: number } | null>(null);
     // Use LOCAL state for the network view — not bound to WalletContext so user can freely switch
     const [viewNetwork, setViewNetwork] = useState<'mainnet' | 'sepolia'>(walletNetwork);
 
@@ -35,8 +36,16 @@ export default function Portfolio() {
     useEffect(() => {
         if (isConnected && walletAddress) {
             loadBalances();
+            // Fetch subscription info
+            fetch(`/api/airdrop/${walletAddress}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && data.tier) setSubscription({ tier: data.tier, expiry: data.expiry });
+                })
+                .catch(() => null);
         } else {
             setAssets([]);
+            setSubscription(null);
         }
     }, [isConnected, walletAddress, loadBalances]);
 
@@ -88,6 +97,11 @@ export default function Portfolio() {
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <Wallet className="w-5 h-5" />
                             <span className="text-sm font-medium uppercase tracking-wider">Total Balance</span>
+                            {subscription && (
+                                <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    {['Basic', 'Standard', 'Premium'][subscription.tier - 1] ?? 'N/A'} Plan
+                                </span>
+                            )}
                         </div>
                         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
                             ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

@@ -29,9 +29,10 @@ async function buildAirdropPayload(tier: number, expiryTimestamp: number) {
 
     // Tier 1: no curated drops, Tier 2: 5, Tier 3: all 10
     const maxCurated = tier === 1 ? 0 : tier === 2 ? 5 : CURATED_AIRDROPS.length;
-    const curatedDrops = CURATED_AIRDROPS.slice(0, maxCurated).map(drop => ({
+    const suggestedDrops = CURATED_AIRDROPS.slice(0, maxCurated).map(drop => ({
         ...drop,
         expiry: now + 90 * 24 * 60 * 60,
+        type: 'suggested' as const,
     }));
 
     return {
@@ -46,8 +47,9 @@ async function buildAirdropPayload(tier: number, expiryTimestamp: number) {
                 amount: '1000 ZET',
                 status: 'Claimable',
                 expiry: now + 30 * 24 * 60 * 60,
+                type: 'eligible' as const,
             },
-            ...curatedDrops,
+            ...suggestedDrops,
         ],
     };
 }
