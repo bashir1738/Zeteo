@@ -45,8 +45,8 @@ async function fetchLiveAirdrops() {
         const data = await response.json();
 
         // Map DefiLlama data to our format
-        // Data format: [{ project: string, url: string, description: string, status: string, ... }]
-        return (data || []).slice(0, 10).map(drop => ({
+        // Increase slice to 50 to have enough data for all tiers
+        return (data || []).slice(0, 50).map(drop => ({
             name: drop.project || 'Unknown Project',
             url: drop.link || 'https://defillama.com/airdrops',
             amount: 'Check eligibility',
@@ -153,14 +153,19 @@ async function processEvent(event, redis) {
         expiry: drop.expiry || (now + 30 * 24 * 60 * 60)
     }));
 
-    // 2. Fetch and merge live airdrops
-    const liveAirdrops = await fetchLiveAirdrops();
-    const filteredLive = liveAirdrops.filter(drop => {
-        try {
-            const domain = new URL(drop.url).hostname;
-            return ALLOWED_DOMAINS.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
-        } catch { return false; }
-    });
+    // 2. Fetch and merge live airdrops with Tier-based limits
+    const maxLive = tier === 1 ? 0 : (tier === 2 ? 5 : 20);
+    let filteredLive = [];
+
+    if (maxLive > 0) {
+        const liveAirdrops = await fetchLiveAirdrops();
+        filteredLive = liveAirdrops.filter(drop => {
+            try {
+                const domain = new URL(drop.url).hostname;
+                return ALLOWED_DOMAINS.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
+            } catch { return false; }
+        }).slice(0, maxLive);
+    }
 
     const combinedAirdrops = [...mockWithExpiry, ...filteredLive];
 
