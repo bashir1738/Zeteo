@@ -45,18 +45,12 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             await wallet.enable();
         }
 
-        // Detect and set network from wallet
-        if (wallet.chainId) {
-            const detectedNetwork = getNetworkFromChainId(wallet.chainId);
-            console.log(`Detected network from wallet: ${detectedNetwork} (${wallet.chainId})`);
-            setNetwork(detectedNetwork);
-        }
-
         // Modern wallets populate account after enable
         if (wallet.account) {
             // Override the provider with retry logic
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (wallet.account as any).provider = await withRetry(async () => {
+                // Use wallet's current chain if available, otherwise fallback to UI setting
                 const currentNetwork = wallet.chainId ? getNetworkFromChainId(wallet.chainId) : network;
                 return new RpcProvider({
                     nodeUrl: getRpcUrl(currentNetwork),
@@ -66,7 +60,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         }
 
         return null;
-    }, [network]);
+    }, [network]); // Dependencies kept but logic inside is more cautious
 
     useEffect(() => {
         const checkConnection = async () => {
@@ -80,6 +74,13 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
 
+                // Initial network detection from wallet
+                if (wallet.chainId) {
+                    const detectedNetwork = getNetworkFromChainId(wallet.chainId);
+                    console.log(`Initial network sync: ${detectedNetwork}`);
+                    setNetwork(detectedNetwork);
+                }
+
                 const walletAccount = await createAccountFromWallet(wallet);
 
                 if (walletAccount) {
@@ -90,12 +91,24 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                     setWalletAddress(wallet.selectedAddress);
                     setIsConnectedState(true);
                 }
+
+                // Listen for network changes in the wallet
+                if (wallet.on) {
+                    wallet.on('networkChanged', (chainId?: string) => {
+                        if (chainId) {
+                            const newNetwork = getNetworkFromChainId(chainId);
+                            console.log('Wallet triggered network change:', newNetwork);
+                            setNetwork(newNetwork);
+                        }
+                    });
+                }
             } catch {
                 console.log('No wallet connected or error checking connection');
             }
         };
         checkConnection();
-    }, [createAccountFromWallet, network]);
+        // Removed [network] from dependencies to prevent the feedback loop on manual switch
+    }, [createAccountFromWallet]);
 
     const connectWallet = useCallback(async (onConnected?: () => void) => {
         try {
@@ -106,6 +119,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const walletExtended = wallet as ExtendedStarknetWindow;
+
+            // Sync network on first manual connection
+            if (walletExtended.chainId) {
+                setNetwork(getNetworkFromChainId(walletExtended.chainId));
+            }
 
             const walletAccount = await createAccountFromWallet(walletExtended);
 
@@ -120,6 +138,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                 localStorage.setItem('starknet_connected', 'true');
             } else {
                 throw new Error('Failed to get wallet address');
+            }
+
+            // Set up listener for subsequent changes
+            if (walletExtended.on) {
+                walletExtended.on('networkChanged', (chainId?: string) => {
+                    if (chainId) {
+                        setNetwork(getNetworkFromChainId(chainId));
+                    }
+                });
             }
 
             if (onConnected) {
