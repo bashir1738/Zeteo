@@ -49,6 +49,7 @@ const Subscription = () => {
     const [statusState, setStatusState] = useState<{ tier: number; message: string } | null>(null);
     const [loadingTier, setLoadingTier] = useState<number | null>(null);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
+    const [currentSubscription, setCurrentSubscription] = useState<{ tier: number; expiry: number } | null>(null);
 
     useEffect(() => {
         const loadPrice = async () => {
@@ -57,6 +58,23 @@ const Subscription = () => {
         };
         loadPrice();
     }, []);
+
+    useEffect(() => {
+        const loadSubscription = async () => {
+            if (isConnected && account?.address) {
+                try {
+                    const { getSubscription } = await import('@/app/lib/contract');
+                    const sub = await getSubscription(account.address);
+                    setCurrentSubscription(sub);
+                } catch (error) {
+                    console.error('Failed to load subscription:', error);
+                }
+            } else {
+                setCurrentSubscription(null);
+            }
+        };
+        loadSubscription();
+    }, [isConnected, account?.address]);
 
     const handleSelect = async (planName: string, tierIndex: number) => {
         if (!isConnected) {
@@ -180,8 +198,22 @@ const Subscription = () => {
                                                 : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
                                         )}
                                     >
-                                        {loadingTier === index ? 'Processing...' : 'Select Plan'}
+                                        {loadingTier === index
+                                            ? 'Processing...'
+                                            : !currentSubscription || currentSubscription.expiry < Math.floor(Date.now() / 1000)
+                                                ? 'Select Plan'
+                                                : currentSubscription.tier === index + 1
+                                                    ? 'Extend Plan'
+                                                    : currentSubscription.tier < index + 1
+                                                        ? 'Upgrade Plan'
+                                                        : 'Switch Plan'}
                                     </button>
+
+                                    {currentSubscription && currentSubscription.expiry > Math.floor(Date.now() / 1000) && (
+                                        <p className="mt-2 text-[10px] text-gray-500 text-center font-mono">
+                                            Carry-over logic: Time will be added to your current expiry.
+                                        </p>
+                                    )}
 
                                     {statusState?.tier === index && (
                                         <div className="mt-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-purple-300 text-center">

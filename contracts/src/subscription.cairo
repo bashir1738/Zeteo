@@ -74,21 +74,30 @@ pub mod Subscription {
             // Defensive check: Ensure oracle address is initialized
             assert(!oracle_address.is_zero(), 'Oracle not initialized');
 
-            let _oracle_dispatcher = IPragmaOracleDispatcher { contract_address: oracle_address };
-
             // Logical check for tier
             assert(tier >= 1 && tier <= 3, 'Invalid tier');
 
-            let duration = 30 * 24 * 60 * 60; // 30 days
+            // Determine duration based on tier
+            // Tier 1: 30 days, Tier 2: 180 days, Tier 3: 365 days
+            let duration: u64 = if tier == 1 {
+                30 * 24 * 60 * 60
+            } else if tier == 2 {
+                180 * 24 * 60 * 60
+            } else {
+                365 * 24 * 60 * 60
+            };
+
             let current_info = self.subscriptions.entry(caller).read();
             let now = get_block_timestamp();
 
+            // Additive duration if current subscription is still active
             let new_expiry = if current_info.expiry > now {
                 current_info.expiry + duration
             } else {
                 now + duration
             };
 
+            // New tier always overrides the old one (Upgrade/Downgrade/Renew)
             let new_info = SubscriptionInfo { expiry: new_expiry, tier: tier };
             self.subscriptions.entry(caller).write(new_info);
 
