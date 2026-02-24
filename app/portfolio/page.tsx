@@ -135,22 +135,22 @@ export default function Portfolio() {
                         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                             <button
                                 onClick={() => setViewNetwork('mainnet')}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewNetwork === 'mainnet'
+                                className={`flex items-center gap-2 px-4 py-1.5 hover:cursor-pointer rounded-lg text-sm font-medium transition-all ${viewNetwork === 'mainnet'
                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
                                     : 'text-gray-400 hover:text-gray-200'
                                     }`}
                             >
-                                <Globe className="w-3.5 h-3.5" />
+                                <Globe className="w-3.5 h-3.5 hover:cursor-pointer" />
                                 Mainnet
                             </button>
                             <button
                                 onClick={() => setViewNetwork('sepolia')}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewNetwork === 'sepolia'
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm hover:cursor-pointer font-medium transition-all ${viewNetwork === 'sepolia'
                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
                                     : 'text-gray-400 hover:text-gray-200'
                                     }`}
                             >
-                                <FlaskConical className="w-3.5 h-3.5" />
+                                <FlaskConical className="w-3.5 h-3.5 hover:cursor-pointer" />
                                 Sepolia
                             </button>
                         </div>
@@ -170,7 +170,7 @@ export default function Portfolio() {
                         <button
                             onClick={() => loadBalances()}
                             disabled={isLoading}
-                            className={`p-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all ${isLoading ? 'animate-spin' : ''}`}
+                            className={`p-2 bg-white/5 border hover:cursor-pointer border-white/10 rounded-xl text-gray-400 hover:text-white transition-all ${isLoading ? 'animate-spin' : ''}`}
                         >
                             <RefreshCw className="w-4 h-4" />
                         </button>

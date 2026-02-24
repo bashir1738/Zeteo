@@ -33,8 +33,8 @@ async def main():
     print(f"🌐 Network: Sepolia Testnet\n")
     
     # Load contract files
-    sierra_path = Path("contracts/zeteo/target/dev/zeteo_Subscription.contract_class.json")
-    casm_path = Path("contracts/zeteo/target/dev/zeteo_Subscription.compiled_contract_class.json")
+    sierra_path = Path("contracts/target/dev/zeteo_Subscription.contract_class.json")
+    casm_path = Path("contracts/target/dev/zeteo_Subscription.compiled_contract_class.json")
     
     with open(sierra_path, "r") as f:
         sierra = json.load(f)
