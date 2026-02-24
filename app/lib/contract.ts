@@ -48,8 +48,16 @@ export const withRetry = async <T>(
     throw lastError;
 };
 
-// Contract ABI - simplified for subscribe function
+// Full starknet.js v9 ABI format - struct must be defined as a top-level ABI entry
 export const SUBSCRIPTION_ABI = [
+    {
+        type: 'struct',
+        name: 'example::subscription::Subscription::SubscriptionInfo',
+        members: [
+            { name: 'expiry', type: 'core::integer::u64' },
+            { name: 'tier', type: 'core::integer::u8' },
+        ],
+    },
     {
         name: 'subscribe',
         type: 'function',
@@ -61,23 +69,17 @@ export const SUBSCRIPTION_ABI = [
         name: 'get_subscription',
         type: 'function',
         inputs: [{ name: 'user', type: 'core::starknet::contract_address::ContractAddress' }],
-        outputs: [
-            {
-                type: 'struct',
-                name: 'SubscriptionInfo',
-                members: [
-                    { name: 'expiry', type: 'core::integer::u64' },
-                    { name: 'tier', type: 'core::integer::u8' }
-                ]
-            }
-        ],
+        outputs: [{
+            type: 'example::subscription::Subscription::SubscriptionInfo',
+            name: 'info'
+        }],
         state_mutability: 'view',
     },
     {
         name: 'get_price',
         type: 'function',
         inputs: [{ name: 'tier', type: 'core::integer::u8' }],
-        outputs: [{ type: 'core::integer::u256' }],
+        outputs: [{ type: 'core::integer::u256', name: 'price' }],
         state_mutability: 'view',
     },
 ];
@@ -116,53 +118,27 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
         nodeUrl: getRpcUrl(),
     });
 
-    // Create contract with new API (single options object)
-    const contract = new Contract({
-        abi: SUBSCRIPTION_ABI,
-        address: CONTRACT_ADDRESS,
-        providerOrAccount: provider,
-    });
-
     try {
+        // Use raw callContract to bypass ABI decoding.
+        // The compiled ABI only exposes get_subscription as returning u64,
+        // but Cairo serializes the full SubscriptionInfo struct as 2 felts:
+        //   [0] = expiry (u64)
+        //   [1] = tier   (u8)
         const result = await withRetry(async () => {
-            return await contract.call('get_subscription', [userAddress]);
+            return await provider.callContract({
+                contractAddress: CONTRACT_ADDRESS,
+                entrypoint: 'get_subscription',
+                calldata: [userAddress],
+            });
         });
 
-        console.log(`DEBUG: Raw result for ${userAddress}:`, result);
+        console.log(`Raw callContract result for ${userAddress}:`, result);
 
-        // Handle different Starknet.js return formats:
-        let expiry = 0;
-        let tier = 0; // 0 = not subscribed, not defaulting to 1
-
-        if (typeof result === 'object' && result !== null) {
-            const info = result as Record<string, unknown>;
-
-            // 1. Named struct fields: { expiry: bigint, tier: bigint }
-            if (info.expiry !== undefined) {
-                expiry = Number(info.expiry);
-                tier = info.tier !== undefined ? Number(info.tier) : 0;
-            }
-            // 2. Array-like: [expiry, tier]
-            else if (info['0'] !== undefined) {
-                expiry = Number(info['0']);
-                tier = info['1'] !== undefined ? Number(info['1']) : 0;
-            }
-            // 3. Wrapped result: { SubscriptionInfo: value }
-            else if (info.SubscriptionInfo !== undefined) {
-                expiry = Number(info.SubscriptionInfo);
-                tier = 0;
-            }
-            // 4. Final fallback
-            else {
-                expiry = Number(result || 0);
-            }
-        } else {
-            // 5. Direct legacy result (bigint or number)
-            expiry = Number(result || 0);
-        }
+        // result is string[] of hex felts
+        const expiry = result[0] ? Number(BigInt(result[0])) : 0;
+        const tier = result[1] ? Number(BigInt(result[1])) : 0;
 
         console.log(`Parsed Subscription: expiry=${expiry}, tier=${tier}`);
-
         return { expiry, tier };
     } catch (error) {
         console.error('Get subscription error:', error);
