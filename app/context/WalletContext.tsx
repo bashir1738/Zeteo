@@ -20,6 +20,7 @@ type ExtendedStarknetWindow = StarknetWindowObject & {
     isConnected?: boolean;
     account?: AccountInterface;
     selectedAddress?: string;
+    chainId?: string;
     enable?: () => Promise<string[]>;
 };
 
@@ -31,6 +32,12 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     const [isConnectedState, setIsConnectedState] = useState(false);
     const [network, setNetwork] = useState<'mainnet' | 'sepolia'>('sepolia');
 
+    // Helper to map chain ID to network name
+    const getNetworkFromChainId = (chainId: string): 'mainnet' | 'sepolia' => {
+        if (chainId === 'SN_MAIN' || chainId === '0x534e5f4d41494e') return 'mainnet';
+        return 'sepolia'; // Default to sepolia
+    };
+
     // Create AccountInterface from wallet
     const createAccountFromWallet = useCallback(async (wallet: ExtendedStarknetWindow): Promise<AccountInterface | null> => {
         // Check if wallet has enable method
@@ -38,13 +45,21 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             await wallet.enable();
         }
 
+        // Detect and set network from wallet
+        if (wallet.chainId) {
+            const detectedNetwork = getNetworkFromChainId(wallet.chainId);
+            console.log(`Detected network from wallet: ${detectedNetwork} (${wallet.chainId})`);
+            setNetwork(detectedNetwork);
+        }
+
         // Modern wallets populate account after enable
         if (wallet.account) {
             // Override the provider with retry logic
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (wallet.account as any).provider = await withRetry(async () => {
+                const currentNetwork = wallet.chainId ? getNetworkFromChainId(wallet.chainId) : network;
                 return new RpcProvider({
-                    nodeUrl: getRpcUrl(network),
+                    nodeUrl: getRpcUrl(currentNetwork),
                 });
             });
             return wallet.account;
