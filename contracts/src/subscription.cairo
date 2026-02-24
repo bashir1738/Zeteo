@@ -1,9 +1,13 @@
-use starknet::ContractAddress;
+#[derive(Drop, Serde, starknet::Store)]
+pub struct SubscriptionInfo {
+    pub expiry: u64,
+    pub tier: u8,
+}
 
 #[starknet::interface]
 pub trait ISubscription<TContractState> {
     fn subscribe(ref self: TContractState, tier: u8);
-    fn get_subscription(self: @TContractState, user: ContractAddress) -> u64;
+    fn get_subscription(self: @TContractState, user: ContractAddress) -> SubscriptionInfo;
     fn get_price(self: @TContractState, tier: u8) -> u256;
 }
 
@@ -19,11 +23,11 @@ pub mod Subscription {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
-    use super::IPragmaOracleDispatcher;
+    use super::{IPragmaOracleDispatcher, SubscriptionInfo};
 
     #[storage]
     struct Storage {
-        subscriptions: Map<ContractAddress, u64>, // User -> Expiry Timestamp
+        subscriptions: Map<ContractAddress, SubscriptionInfo>, // User -> Subscription Data
         owner: ContractAddress,
         oracle_address: ContractAddress,
         eth_token_address: ContractAddress // For payment, if we were doing real transfers
@@ -76,16 +80,17 @@ pub mod Subscription {
             assert(tier >= 1 && tier <= 3, 'Invalid tier');
 
             let duration = 30 * 24 * 60 * 60; // 30 days
-            let current_expiry = self.subscriptions.entry(caller).read();
+            let current_info = self.subscriptions.entry(caller).read();
             let now = get_block_timestamp();
 
-            let new_expiry = if current_expiry > now {
-                current_expiry + duration
+            let new_expiry = if current_info.expiry > now {
+                current_info.expiry + duration
             } else {
                 now + duration
             };
 
-            self.subscriptions.entry(caller).write(new_expiry);
+            let new_info = SubscriptionInfo { expiry: new_expiry, tier: tier };
+            self.subscriptions.entry(caller).write(new_info);
 
             self
                 .emit(
@@ -95,7 +100,7 @@ pub mod Subscription {
                 );
         }
 
-        fn get_subscription(self: @ContractState, user: ContractAddress) -> u64 {
+        fn get_subscription(self: @ContractState, user: ContractAddress) -> SubscriptionInfo {
             self.subscriptions.entry(user).read()
         }
 

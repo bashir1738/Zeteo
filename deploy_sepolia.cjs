@@ -24,8 +24,8 @@ async function main() {
         });
 
         // Read the compiled contract
-        const sierraPath = path.join(__dirname, "contracts/zeteo/target/dev/zeteo_Subscription.contract_class.json");
-        const casmPath = path.join(__dirname, "contracts/zeteo/target/dev/zeteo_Subscription.compiled_contract_class.json");
+        const sierraPath = path.join(__dirname, "contracts/target/dev/zeteo_Subscription.contract_class.json");
+        const casmPath = path.join(__dirname, "contracts/target/dev/zeteo_Subscription.compiled_contract_class.json");
 
         const sierra = json.parse(fs.readFileSync(sierraPath, "utf8"));
         const casm = json.parse(fs.readFileSync(casmPath, "utf8"));
