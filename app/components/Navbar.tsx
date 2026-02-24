@@ -45,7 +45,7 @@ const Navbar = () => {
                         {!isConnected ? (
                             <button
                                 onClick={() => connectWallet(() => router.push('/dashboard'))}
-                                className="flex items-center gap-2 px-4 py-2 bg-white text-black text-sm rounded-lg font-semibold hover:bg-gray-200 transition-all border border-transparent"
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-black text-sm rounded-lg font-semibold hover:bg-gray-200 transition-all border border-transparent hover:cursor-pointer"
                             >
                                 <Wallet className="w-4 h-4" />
                                 <span>Connect Wallet</span>
