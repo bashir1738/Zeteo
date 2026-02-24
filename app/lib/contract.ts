@@ -136,7 +136,28 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
 
         // result is string[] of hex felts
         const expiry = result[0] ? Number(BigInt(result[0])) : 0;
-        const tier = result[1] ? Number(BigInt(result[1])) : 0;
+        let tier = result[1] ? Number(BigInt(result[1])) : 0;
+
+        // Fallback: If tier is 0 but expiry is active, try the new get_tier method
+        // (This will work once the contract is redeployed with the get_tier function)
+        if (tier === 0 && expiry > Math.floor(Date.now() / 1000)) {
+            try {
+                const tierResult = await withRetry(async () => {
+                    return await provider.callContract({
+                        contractAddress: CONTRACT_ADDRESS,
+                        entrypoint: 'get_tier',
+                        calldata: [userAddress],
+                    });
+                });
+                if (tierResult && tierResult[0]) {
+                    tier = Number(BigInt(tierResult[0]));
+                    console.log(`Fallback get_tier successful: tier=${tier}`);
+                }
+            } catch (e) {
+                // get_tier likely doesn't exist yet on-chain
+                console.log('get_tier fallback failed (likely not deployed yet)');
+            }
+        }
 
         console.log(`Parsed Subscription: expiry=${expiry}, tier=${tier}`);
         return { expiry, tier };
