@@ -132,27 +132,27 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
 
         // Handle different Starknet.js return formats:
         let expiry = 0;
-        let tier = 1;
+        let tier = 0; // 0 = not subscribed, not defaulting to 1
 
         if (typeof result === 'object' && result !== null) {
-            const info = result as any;
+            const info = result as Record<string, unknown>;
 
-            // 1. Check for explicit struct fields (Ideal new format)
+            // 1. Named struct fields: { expiry: bigint, tier: bigint }
             if (info.expiry !== undefined) {
                 expiry = Number(info.expiry);
-                tier = Number(info.tier !== undefined ? info.tier : 1);
+                tier = info.tier !== undefined ? Number(info.tier) : 0;
             }
-            // 2. Check for wrapped result: { SubscriptionInfo: 1234n }
+            // 2. Array-like: [expiry, tier]
+            else if (info['0'] !== undefined) {
+                expiry = Number(info['0']);
+                tier = info['1'] !== undefined ? Number(info['1']) : 0;
+            }
+            // 3. Wrapped result: { SubscriptionInfo: value }
             else if (info.SubscriptionInfo !== undefined) {
                 expiry = Number(info.SubscriptionInfo);
-                tier = 1; // Default for legacy
+                tier = 0;
             }
-            // 3. Check for array-like result: [expiry, tier]
-            else if (info[0] !== undefined) {
-                expiry = Number(info[0]);
-                tier = Number(info[1] !== undefined ? info[1] : 1);
-            }
-            // 4. Final fallback for other object types
+            // 4. Final fallback
             else {
                 expiry = Number(result || 0);
             }
