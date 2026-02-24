@@ -38,11 +38,16 @@ export async function fetchTokenBalances(
     const ids = tokens.map(t => cgIds[t.symbol]).filter(Boolean).join(',');
     let prices: Record<string, { usd: number; usd_24h_change: number }> = {};
 
-    try {
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-        prices = await response.json();
-    } catch (e) {
-        console.error('Failed to fetch prices from CoinGecko:', e);
+    if (ids) {
+        try {
+            // Use the server-side proxy to avoid CORS restrictions on CoinGecko's free API
+            const response = await fetch(`/api/prices?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+            if (response.ok) {
+                prices = await response.json();
+            }
+        } catch (e) {
+            console.error('Failed to fetch prices from price proxy:', e);
+        }
     }
 
     const balancePromises = tokens.map(async (token) => {
