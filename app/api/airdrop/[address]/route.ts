@@ -48,22 +48,26 @@ export async function GET(
             if (expiryTimestamp > now) {
                 console.log(`User ${address} has active subscription (Tier: ${tier}, Expiry: ${expiryTimestamp})`);
 
-                // Fetch live airdrops as fallback
+                // Fetch live airdrops as fallback with Tier-based limits
                 let liveAirdrops = [];
-                try {
-                    const response = await fetch('https://api.llama.fi/airdrops');
-                    if (response.ok) {
-                        const data = await response.json();
-                        liveAirdrops = (data || []).slice(0, 5).map((drop: { project?: string; link?: string; status?: string }) => ({
-                            name: drop.project || 'Unknown Project',
-                            url: drop.link || 'https://defillama.com/airdrops',
-                            amount: 'Check eligibility',
-                            status: drop.status === 'active' ? 'Claimable' : 'Potential',
-                            expiry: now + (90 * 24 * 60 * 60)
-                        }));
+                const maxLive = tier === 1 ? 0 : (tier === 2 ? 5 : 20);
+
+                if (maxLive > 0) {
+                    try {
+                        const response = await fetch('https://api.llama.fi/airdrops');
+                        if (response.ok) {
+                            const data = await response.json();
+                            liveAirdrops = (data || []).slice(0, maxLive).map((drop: { project?: string; link?: string; status?: string }) => ({
+                                name: drop.project || 'Unknown Project',
+                                url: drop.link || 'https://defillama.com/airdrops',
+                                amount: 'Check eligibility',
+                                status: drop.status === 'active' ? 'Claimable' : 'Potential',
+                                expiry: now + (90 * 24 * 60 * 60)
+                            }));
+                        }
+                    } catch (e) {
+                        console.warn('Fallback live fetch failed', e);
                     }
-                } catch (e) {
-                    console.warn('Fallback live fetch failed', e);
                 }
 
                 const mockData = {
