@@ -77,7 +77,7 @@ const Hero = () => {
                     ) : (
                         <button
                             onClick={scrollToPricing}
-                            className="group relative px-6 py-3 bg-white text-black rounded-lg font-semibold text-base hover:bg-gray-200 transition-all flex items-center gap-2"
+                            className="group relative px-6 py-3 bg-white text-black rounded-lg font-semibold text-base hover:bg-gray-200 transition-all flex items-center gap-2 hover:cursor-pointer"
                         >
                             Get Started
                             <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
