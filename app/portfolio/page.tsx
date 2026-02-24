@@ -8,19 +8,21 @@ import { TOKENS, Token } from '@/app/lib/tokens';
 import { fetchTokenBalances } from '@/app/lib/balance';
 
 export default function Portfolio() {
-    const { isConnected, connectWallet, walletAddress, network, switchNetwork } = useWallet();
+    const { isConnected, connectWallet, walletAddress, network: walletNetwork } = useWallet();
     const [filter, setFilter] = useState('');
     const [assets, setAssets] = useState<(Token & { balance: string; price: number; change24h: number })[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    // Use LOCAL state for the network view — not bound to WalletContext so user can freely switch
+    const [viewNetwork, setViewNetwork] = useState<'mainnet' | 'sepolia'>(walletNetwork);
 
     const loadBalances = useCallback(async () => {
         if (!walletAddress) return;
 
         setIsLoading(true);
         try {
-            const tokensForNetwork = TOKENS[network];
-            const balances = await fetchTokenBalances(walletAddress, tokensForNetwork, network);
+            const tokensForNetwork = TOKENS[viewNetwork];
+            const balances = await fetchTokenBalances(walletAddress, tokensForNetwork, viewNetwork);
             setAssets(balances);
             setLastUpdated(new Date());
         } catch (error) {
@@ -28,7 +30,7 @@ export default function Portfolio() {
         } finally {
             setIsLoading(false);
         }
-    }, [walletAddress, network]);
+    }, [walletAddress, viewNetwork]);
 
     useEffect(() => {
         if (isConnected && walletAddress) {
@@ -132,8 +134,8 @@ export default function Portfolio() {
                         {/* Network Switcher */}
                         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                             <button
-                                onClick={() => switchNetwork('mainnet')}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${network === 'mainnet'
+                                onClick={() => setViewNetwork('mainnet')}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewNetwork === 'mainnet'
                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
                                     : 'text-gray-400 hover:text-gray-200'
                                     }`}
@@ -142,8 +144,8 @@ export default function Portfolio() {
                                 Mainnet
                             </button>
                             <button
-                                onClick={() => switchNetwork('sepolia')}
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${network === 'sepolia'
+                                onClick={() => setViewNetwork('sepolia')}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewNetwork === 'sepolia'
                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
                                     : 'text-gray-400 hover:text-gray-200'
                                     }`}
@@ -179,7 +181,7 @@ export default function Portfolio() {
                     {isLoading && assets.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
                             <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
-                            <p className="text-gray-400 font-medium">Fetching your assets on {network}...</p>
+                            <p className="text-gray-400 font-medium">Fetching your assets on {viewNetwork}...</p>
                         </div>
                     ) : (
                         <table className="w-full text-left">
@@ -252,7 +254,7 @@ export default function Portfolio() {
                         ) : (
                             <div className="flex flex-col items-center gap-3">
                                 <Wallet className="w-8 h-8 opacity-20" />
-                                <p>No assets found on {network} for this wallet.</p>
+                                <p>No assets found on {viewNetwork} for this wallet.</p>
                             </div>
                         )}
                     </div>
