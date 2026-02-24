@@ -5,101 +5,136 @@ import { getSubscription } from '@/app/lib/contract';
 const REDIS_URL = process.env.REDIS_URL || process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379';
 const IS_PROD = process.env.NODE_ENV === 'production';
 
+type LiveDrop = { project?: string; link?: string; status?: string };
+
+/**
+ * Fetch live airdrops from DefiLlama based on tier limits.
+ * Tier 1 = 0 live drops, Tier 2 = 5, Tier 3 = 20
+ */
+async function fetchLiveAirdrops(tier: number, now: number) {
+    const maxLive = tier === 1 ? 0 : tier === 2 ? 5 : 20;
+    if (maxLive === 0) return [];
+    try {
+        const response = await fetch('https://api.llama.fi/airdrops');
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data || []).slice(0, maxLive).map((drop: LiveDrop) => ({
+            name: drop.project || 'Unknown Project',
+            url: drop.link || 'https://defillama.com/airdrops',
+            amount: 'Check eligibility',
+            status: drop.status === 'active' ? 'Claimable' : 'Potential',
+            expiry: now + 90 * 24 * 60 * 60,
+        }));
+    } catch {
+        console.warn('Live airdrop fetch failed');
+        return [];
+    }
+}
+
+/**
+ * Build a full airdrop response based on the on-chain subscription.
+ * Merges Zeteo milestone drops with tier-gated live drops.
+ */
+async function buildAirdropPayload(tier: number, expiryTimestamp: number) {
+    const now = Math.floor(Date.now() / 1000);
+    const liveAirdrops = await fetchLiveAirdrops(tier, now);
+
+    return {
+        status: 'active_subscription',
+        tier,
+        expiry: expiryTimestamp,
+        last_updated: now,
+        airdrops: [
+            {
+                name: 'Zeteo Milestone #1',
+                url: 'https://starknet.io/claim',
+                amount: '1000 ZET',
+                status: 'Claimable',
+                expiry: now + 30 * 24 * 60 * 60,
+            },
+            ...liveAirdrops,
+        ],
+    };
+}
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ address: string }> }
 ) {
     try {
         const { address } = await params;
+        const now = Math.floor(Date.now() / 1000);
 
-        // Fetch user data from Redis (Optional, and skip if default localhost on prod)
-        let redisData = null;
+        // ── Step 1: Always verify on-chain state first ──────────────────────────
+        let onChainTier = 0;
+        let onChainExpiry = 0;
+        try {
+            const sub = await getSubscription(address);
+            onChainTier = sub.tier;
+            onChainExpiry = sub.expiry;
+        } catch (contractError) {
+            console.error('Contract check failed:', contractError);
+            return NextResponse.json(
+                { error: 'Contract interaction failed', code: 'CONTRACT_ERROR' },
+                { status: 500 }
+            );
+        }
+
+        // No active subscription on-chain
+        if (onChainExpiry <= now) {
+            return NextResponse.json(
+                { error: 'No active subscription found. Please subscribe to access the dashboard.', code: 'NO_SUBSCRIPTION' },
+                { status: 404 }
+            );
+        }
+
+        // ── Step 2: Try Redis cache ──────────────────────────────────────────────
+        let redisClient = null;
+        let cachedData = null;
         const isDefaultRedis = REDIS_URL.includes('localhost') || REDIS_URL.includes('127.0.0.1');
 
         if (!IS_PROD || !isDefaultRedis) {
             try {
-                const redisClient = createClient({
+                redisClient = createClient({
                     url: REDIS_URL,
-                    socket: {
-                        connectTimeout: 2000 // 2 second timeout for Vercel functions
-                    }
+                    socket: { connectTimeout: 2000 },
                 });
                 await redisClient.connect();
                 const key = `user:${address}:data`;
-                redisData = await redisClient.get(key);
+                const raw = await redisClient.get(key);
+                if (raw) cachedData = JSON.parse(raw);
+            } catch (redisError) {
+                console.warn('Redis unavailable:', redisError instanceof Error ? redisError.message : redisError);
+            }
+        }
+
+        // ── Step 3: Hot Cache Update ─────────────────────────────────────────────
+        // If cached tier matches on-chain tier, serve cache directly
+        if (cachedData && cachedData.tier === onChainTier && cachedData.expiry === onChainExpiry) {
+            console.log(`Cache hit for ${address} (Tier ${onChainTier})`);
+            if (redisClient) await redisClient.disconnect();
+            return NextResponse.json(cachedData);
+        }
+
+        // Tier mismatch or no cache — rebuild from scratch
+        console.log(`Cache miss/upgrade detected for ${address}: on-chain Tier ${onChainTier}, cached Tier ${cachedData?.tier ?? 'none'}`);
+        const freshPayload = await buildAirdropPayload(onChainTier, onChainExpiry);
+
+        // Write fresh data back to Redis
+        if (redisClient) {
+            try {
+                const key = `user:${address}:data`;
+                await redisClient.set(key, JSON.stringify(freshPayload), { EX: 24 * 60 * 60 });
+                console.log(`Redis updated for ${address} (Tier ${onChainTier})`);
+            } catch (writeError) {
+                console.warn('Redis write failed:', writeError);
+            } finally {
                 await redisClient.disconnect();
-            } catch (redisError: unknown) {
-                const message = redisError instanceof Error ? redisError.message : String(redisError);
-                console.warn('Redis unavailable, falling back to contract check:', message);
             }
         }
 
-        if (redisData) {
-            const userData = JSON.parse(redisData);
-            return NextResponse.json(userData);
-        }
+        return NextResponse.json(freshPayload);
 
-        // Check smart contract directly
-        console.log(`Checking subscription for ${address} on contract...`);
-        try {
-            const { expiry: expiryTimestamp, tier } = await getSubscription(address);
-            const now = Math.floor(Date.now() / 1000);
-
-            if (expiryTimestamp > now) {
-                console.log(`User ${address} has active subscription (Tier: ${tier}, Expiry: ${expiryTimestamp})`);
-
-                // Fetch live airdrops as fallback with Tier-based limits
-                let liveAirdrops = [];
-                const maxLive = tier === 1 ? 0 : (tier === 2 ? 5 : 20);
-
-                if (maxLive > 0) {
-                    try {
-                        const response = await fetch('https://api.llama.fi/airdrops');
-                        if (response.ok) {
-                            const data = await response.json();
-                            liveAirdrops = (data || []).slice(0, maxLive).map((drop: { project?: string; link?: string; status?: string }) => ({
-                                name: drop.project || 'Unknown Project',
-                                url: drop.link || 'https://defillama.com/airdrops',
-                                amount: 'Check eligibility',
-                                status: drop.status === 'active' ? 'Claimable' : 'Potential',
-                                expiry: now + (90 * 24 * 60 * 60)
-                            }));
-                        }
-                    } catch (e) {
-                        console.warn('Fallback live fetch failed', e);
-                    }
-                }
-
-                const mockData = {
-                    status: 'Active',
-                    tier: tier || 1,
-                    expiry: expiryTimestamp,
-                    airdrops: [
-                        {
-                            name: 'Zeteo Milestone #1',
-                            url: 'https://starknet.io/claim',
-                            amount: '1000 ZET',
-                            status: 'Claimable',
-                            expiry: now + 30 * 24 * 60 * 60,
-                        },
-                        ...liveAirdrops
-                    ]
-                };
-                return NextResponse.json(mockData);
-            } else {
-                return NextResponse.json(
-                    { error: 'No active subscription found. Please subscribe to access the dashboard.', code: 'NO_SUBSCRIPTION' },
-                    { status: 404 }
-                );
-            }
-        } catch (contractError: unknown) {
-            console.error('Contract check failed:', contractError);
-            const message = contractError instanceof Error ? contractError.message : String(contractError);
-            return NextResponse.json(
-                { error: `Contract interaction failed: ${message}`, code: 'CONTRACT_ERROR' },
-                { status: 500 }
-            );
-        }
     } catch (error) {
         console.error('API error:', error);
         return NextResponse.json(
