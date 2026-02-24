@@ -76,7 +76,17 @@ export async function fetchTokenBalances(
                 change24h: priceData?.usd_24h_change || 0
             };
         } catch (error: any) {
-            console.error(`Error fetching balance for ${token.symbol} (${token.address}) on ${nodeUrl}:`, error?.message || error);
+            const errorMessage = error?.message || error?.toString() || '';
+            const isContractNotFound = errorMessage.includes('Contract not found') ||
+                (error?.code === 20) ||
+                (error?.code === -32603 && errorMessage.includes('20'));
+
+            if (isContractNotFound) {
+                console.warn(`Token ${token.symbol} not found on ${network}. Skipping.`);
+            } else {
+                console.error(`Error fetching balance for ${token.symbol} (${token.address}) on ${nodeUrl}:`, errorMessage);
+            }
+
             return {
                 ...token,
                 balance: '0',
