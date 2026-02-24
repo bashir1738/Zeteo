@@ -1,3 +1,5 @@
+use starknet::ContractAddress;
+
 #[derive(Drop, Serde, starknet::Store)]
 pub struct SubscriptionInfo {
     pub expiry: u64,
@@ -7,7 +9,8 @@ pub struct SubscriptionInfo {
 #[starknet::interface]
 pub trait ISubscription<TContractState> {
     fn subscribe(ref self: TContractState, tier: u8);
-    fn get_subscription(self: @TContractState, user: ContractAddress) -> SubscriptionInfo;
+    fn get_subscription(self: @TContractState, user: ContractAddress) -> (u64, u8);
+    fn get_tier(self: @TContractState, user: ContractAddress) -> u8;
     fn get_price(self: @TContractState, tier: u8) -> u256;
 }
 
@@ -109,8 +112,13 @@ pub mod Subscription {
                 );
         }
 
-        fn get_subscription(self: @ContractState, user: ContractAddress) -> SubscriptionInfo {
-            self.subscriptions.entry(user).read()
+        fn get_subscription(self: @ContractState, user: ContractAddress) -> (u64, u8) {
+            let info = self.subscriptions.entry(user).read();
+            (info.expiry, info.tier)
+        }
+
+        fn get_tier(self: @ContractState, user: ContractAddress) -> u8 {
+            self.subscriptions.entry(user).read().tier
         }
 
         fn get_price(self: @ContractState, tier: u8) -> u256 {
