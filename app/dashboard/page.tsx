@@ -125,8 +125,8 @@ export default function Dashboard() {
                 <div className="flex items-center gap-4">
                     <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
                         <span className="text-gray-400 text-sm">Current Plan</span>
-                        <div className="text-xl font-bold text-transparent bg-clip-text bg-purple-400">
-                            {airdropData ? tierNames[airdropData.tier - 1] : 'N/A'}
+                        <div className="text-xl font-bold text-purple-400">
+                            {airdropData ? (tierNames[airdropData.tier - 1] ?? 'N/A') : 'N/A'}
                         </div>
                     </div>
                     <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
