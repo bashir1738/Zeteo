@@ -13,19 +13,51 @@ const ALLOWED_DOMAINS = [
     'optimism.io',
     'polygon.io',
     'base.org',
-    'eigenlayer.xyz',   
+    'eigenlayer.xyz',
     'ether.fi',
     'zksync.io',
     'arbitrum.io',
     'scroll.io'
 ];
 
-// Mock Airdrop Data
+// Mock Airdrop Data (Kept for demonstration)
 const MOCK_AIRDROPS = [
-    { name: 'Starknet Early Adopter', url: 'https://starknet.io/claim', amount: '500 STRK' },
-    { name: 'Optimism Drop #1', url: 'https://optimism.io/airdrop', amount: '200 OP' },
-    { name: 'Malicious Drop', url: 'https://scam-site.com/claim', amount: '1000 SCAM' }, // Should be filtered
+    {
+        name: 'Zeteo Milestone #1',
+        url: 'https://starknet.io/claim',
+        amount: '1000 ZET',
+        status: 'Claimable'
+    },
+    {
+        name: 'Early Supporter Drop',
+        url: 'https://starknet.io/claim',
+        amount: '500 ZET',
+        status: 'Pending'
+    }
 ];
+
+// Fetch live airdrops from DefiLlama
+async function fetchLiveAirdrops() {
+    try {
+        console.log('Fetching live airdrops from DefiLlama...');
+        const response = await fetch('https://api.llama.fi/airdrops');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        // Map DefiLlama data to our format
+        // Data format: [{ project: string, url: string, description: string, status: string, ... }]
+        return (data || []).slice(0, 10).map(drop => ({
+            name: drop.project || 'Unknown Project',
+            url: drop.link || 'https://defillama.com/airdrops',
+            amount: 'Check eligibility',
+            status: drop.status === 'active' ? 'Claimable' : 'Potential',
+            expiry: Math.floor(Date.now() / 1000) + (90 * 24 * 60 * 60) // Default 90 days
+        }));
+    } catch (error) {
+        console.error('Failed to fetch live airdrops:', error);
+        return [];
+    }
+}
 
 // Event Selector for NewSubscription(user, tier, expiry, timestamp)
 // calculated keccak256("NewSubscription")
@@ -101,46 +133,52 @@ async function processEvent(event, redis) {
     console.log('Detected NewSubscription event:', event);
 
     // Parse Event Data
-    // Event layout: [user_address, tier, expiry, timestamp] (based on Cairo definition)
-    // Note: Depends on how Cairo serializes. 
-    // NewSubscription { user: key, tier, expiry, timestamp }
-    // keys: [selector, user] (since user is key)
-    // data: [tier, expiry, timestamp]
-
-    const userAddress = event.keys[1]; // 2nd key is user (index 1)
+    const userAddress = event.keys[1];
     const tier = parseInt(event.data[0]);
     const expiry = parseInt(event.data[1]);
 
     console.log(`Processing subscription for ${userAddress} (Tier ${tier})`);
 
-    // Mock Business Logic: Check Airdrops
-    const eligibleAirdrops = MOCK_AIRDROPS.filter(drop => {
-        // Domain Security Filter
+    // 1. Filter Mock Airdrops
+    const eligibleMockAirdrops = MOCK_AIRDROPS.filter(drop => {
         try {
             const domain = new URL(drop.url).hostname;
-            const isAllowed = ALLOWED_DOMAINS.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
-            return isAllowed;
-        } catch {
-            console.error(`Invalid URL in mock data: ${drop.url}`);
-            return false;
-        }
+            return ALLOWED_DOMAINS.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
+        } catch { return false; }
     });
+
+    const now = Math.floor(Date.now() / 1000);
+    const mockWithExpiry = eligibleMockAirdrops.map(drop => ({
+        ...drop,
+        expiry: drop.expiry || (now + 30 * 24 * 60 * 60)
+    }));
+
+    // 2. Fetch and merge live airdrops
+    const liveAirdrops = await fetchLiveAirdrops();
+    const filteredLive = liveAirdrops.filter(drop => {
+        try {
+            const domain = new URL(drop.url).hostname;
+            return ALLOWED_DOMAINS.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
+        } catch { return false; }
+    });
+
+    const combinedAirdrops = [...mockWithExpiry, ...filteredLive];
 
     const userData = {
         status: 'active_subscription',
         tier: tier,
         expiry: expiry,
-        airdrops: eligibleAirdrops,
-        last_updated: Math.floor(Date.now() / 1000)
+        airdrops: combinedAirdrops,
+        last_updated: now
     };
 
-    // Write to Redis
+    // 3. Write to Redis
     const key = `user:${userAddress}:data`;
     await redis.set(key, JSON.stringify(userData), {
         EX: 24 * 60 * 60 // 24 hours expiry
     });
 
-    console.log(`Data written to Redis for ${userAddress}`);
+    console.log(`Data written to Redis for ${userAddress} with ${combinedAirdrops.length} airdrops`);
 }
 
 main().catch(console.error);

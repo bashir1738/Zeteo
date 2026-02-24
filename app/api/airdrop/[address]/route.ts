@@ -47,25 +47,38 @@ export async function GET(
 
             if (expiryTimestamp > now) {
                 console.log(`User ${address} has active subscription (Tier: ${tier}, Expiry: ${expiryTimestamp})`);
+
+                // Fetch live airdrops as fallback
+                let liveAirdrops = [];
+                try {
+                    const response = await fetch('https://api.llama.fi/airdrops');
+                    if (response.ok) {
+                        const data = await response.json();
+                        liveAirdrops = (data || []).slice(0, 5).map((drop: { project?: string; link?: string; status?: string }) => ({
+                            name: drop.project || 'Unknown Project',
+                            url: drop.link || 'https://defillama.com/airdrops',
+                            amount: 'Check eligibility',
+                            status: drop.status === 'active' ? 'Claimable' : 'Potential',
+                            expiry: now + (90 * 24 * 60 * 60)
+                        }));
+                    }
+                } catch (e) {
+                    console.warn('Fallback live fetch failed', e);
+                }
+
                 const mockData = {
                     status: 'Active',
                     tier: tier || 1,
                     expiry: expiryTimestamp,
                     airdrops: [
                         {
-                            name: 'Zeteo Early Adopter',
-                            url: 'https://zeteo.io/claim',
-                            amount: '500 ZET',
+                            name: 'Zeteo Milestone #1',
+                            url: 'https://starknet.io/claim',
+                            amount: '1000 ZET',
                             status: 'Claimable',
                             expiry: now + 30 * 24 * 60 * 60,
                         },
-                        {
-                            name: 'Starknet Odyssey',
-                            url: 'https://starknet.io/odyssey',
-                            amount: '100 STRK',
-                            status: 'Pending',
-                            expiry: now + 45 * 24 * 60 * 60,
-                        }
+                        ...liveAirdrops
                     ]
                 };
                 return NextResponse.json(mockData);
