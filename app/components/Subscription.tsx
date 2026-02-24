@@ -191,7 +191,7 @@ const Subscription = () => {
                                         onClick={() => handleSelect(plan.name, index)}
                                         disabled={loadingTier !== null}
                                         className={clsx(
-                                            "w-full py-4 rounded-lg font-bold text-sm transition-all border",
+                                            "w-full py-4 rounded-lg font-bold text-sm hover:cursor-pointer transition-all border",
                                             loadingTier !== null && "opacity-50 cursor-not-allowed",
                                             plan.popular
                                                 ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"

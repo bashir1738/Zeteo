@@ -96,7 +96,7 @@ export default function Dashboard() {
 
     if (error) {
         return (
-            <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto">
+            <div className="min-h-screen py-12 px-4 md:px-8 pt-20 max-w-7xl mx-auto">
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
                     <p className="text-red-400">{error}</p>
                     <Link href="/" className="mt-4 inline-block text-purple-400 hover:text-purple-300">
