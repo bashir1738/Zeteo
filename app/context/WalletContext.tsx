@@ -20,6 +20,7 @@ type ExtendedStarknetWindow = StarknetWindowObject & {
     isConnected?: boolean;
     account?: AccountInterface;
     selectedAddress?: string;
+    chainId?: string;
     enable?: () => Promise<string[]>;
 };
 
@@ -30,6 +31,12 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
     const [isConnectedState, setIsConnectedState] = useState(false);
     const [network, setNetwork] = useState<'mainnet' | 'sepolia'>('sepolia');
+
+    // Helper to map chain ID to network name
+    const getNetworkFromChainId = (chainId: string): 'mainnet' | 'sepolia' => {
+        if (chainId === 'SN_MAIN' || chainId === '0x534e5f4d41494e') return 'mainnet';
+        return 'sepolia'; // Default to sepolia
+    };
 
     // Create AccountInterface from wallet
     const createAccountFromWallet = useCallback(async (wallet: ExtendedStarknetWindow): Promise<AccountInterface | null> => {
@@ -43,15 +50,17 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             // Override the provider with retry logic
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (wallet.account as any).provider = await withRetry(async () => {
+                // Use wallet's current chain if available, otherwise fallback to UI setting
+                const currentNetwork = wallet.chainId ? getNetworkFromChainId(wallet.chainId) : network;
                 return new RpcProvider({
-                    nodeUrl: getRpcUrl(network),
+                    nodeUrl: getRpcUrl(currentNetwork),
                 });
             });
             return wallet.account;
         }
 
         return null;
-    }, [network]);
+    }, [network]); // Dependencies kept but logic inside is more cautious
 
     useEffect(() => {
         const checkConnection = async () => {
@@ -65,6 +74,13 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
 
+                // Initial network detection from wallet
+                if (wallet.chainId) {
+                    const detectedNetwork = getNetworkFromChainId(wallet.chainId);
+                    console.log(`Initial network sync: ${detectedNetwork}`);
+                    setNetwork(detectedNetwork);
+                }
+
                 const walletAccount = await createAccountFromWallet(wallet);
 
                 if (walletAccount) {
@@ -75,12 +91,24 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                     setWalletAddress(wallet.selectedAddress);
                     setIsConnectedState(true);
                 }
+
+                // Listen for network changes in the wallet
+                if (wallet.on) {
+                    wallet.on('networkChanged', (chainId?: string) => {
+                        if (chainId) {
+                            const newNetwork = getNetworkFromChainId(chainId);
+                            console.log('Wallet triggered network change:', newNetwork);
+                            setNetwork(newNetwork);
+                        }
+                    });
+                }
             } catch {
                 console.log('No wallet connected or error checking connection');
             }
         };
         checkConnection();
-    }, [createAccountFromWallet, network]);
+        // Removed [network] from dependencies to prevent the feedback loop on manual switch
+    }, [createAccountFromWallet]);
 
     const connectWallet = useCallback(async (onConnected?: () => void) => {
         try {
@@ -91,6 +119,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const walletExtended = wallet as ExtendedStarknetWindow;
+
+            // Sync network on first manual connection
+            if (walletExtended.chainId) {
+                setNetwork(getNetworkFromChainId(walletExtended.chainId));
+            }
 
             const walletAccount = await createAccountFromWallet(walletExtended);
 
@@ -105,6 +138,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
                 localStorage.setItem('starknet_connected', 'true');
             } else {
                 throw new Error('Failed to get wallet address');
+            }
+
+            // Set up listener for subsequent changes
+            if (walletExtended.on) {
+                walletExtended.on('networkChanged', (chainId?: string) => {
+                    if (chainId) {
+                        setNetwork(getNetworkFromChainId(chainId));
+                    }
+                });
             }
 
             if (onConnected) {

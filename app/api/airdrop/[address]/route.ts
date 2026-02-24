@@ -42,14 +42,14 @@ export async function GET(
         // Check smart contract directly
         console.log(`Checking subscription for ${address} on contract...`);
         try {
-            const expiryTimestamp = await getSubscription(address);
+            const { expiry: expiryTimestamp, tier } = await getSubscription(address);
             const now = Math.floor(Date.now() / 1000);
 
             if (expiryTimestamp > now) {
-                console.log(`User ${address} has active subscription (Expiry: ${expiryTimestamp})`);
+                console.log(`User ${address} has active subscription (Tier: ${tier}, Expiry: ${expiryTimestamp})`);
                 const mockData = {
                     status: 'Active',
-                    tier: 3,
+                    tier: tier || 1,
                     expiry: expiryTimestamp,
                     airdrops: [
                         {

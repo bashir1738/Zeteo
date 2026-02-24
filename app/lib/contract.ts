@@ -4,15 +4,17 @@ import { Contract, RpcProvider, AccountInterface } from 'starknet';
 export const getRpcUrl = (network?: 'mainnet' | 'sepolia') => {
     const apiKey = process.env.NEXT_PUBLIC_INFURA_STARKNET_API_KEY || '***REMOVED***';
 
-    // If a specific network is requested, return the corresponding Infura URL
+    // 1. If an explicit network is requested, use Infura for that network
     if (network === 'mainnet') return `https://starknet-mainnet.infura.io/v3/${apiKey}`;
     if (network === 'sepolia') return `https://starknet-sepolia.infura.io/v3/${apiKey}`;
 
-    // Fallback to environment variable if explicitly set, otherwise use Infura based on global network setting
-    return process.env.NEXT_PUBLIC_STARKNET_RPC_URL
-        || (process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
-            ? `https://starknet-mainnet.infura.io/v3/${apiKey}`
-            : `https://starknet-sepolia.infura.io/v3/${apiKey}`);
+    // 2. If no network is requested, check the general RPC override
+    if (process.env.NEXT_PUBLIC_STARKNET_RPC_URL) return process.env.NEXT_PUBLIC_STARKNET_RPC_URL;
+
+    // 3. Fallback to Infura based on the global network environment variable
+    return process.env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet'
+        ? `https://starknet-mainnet.infura.io/v3/${apiKey}`
+        : `https://starknet-sepolia.infura.io/v3/${apiKey}`;
 };
 
 // Retry helper with exponential backoff
@@ -59,7 +61,16 @@ export const SUBSCRIPTION_ABI = [
         name: 'get_subscription',
         type: 'function',
         inputs: [{ name: 'user', type: 'core::starknet::contract_address::ContractAddress' }],
-        outputs: [{ type: 'core::integer::u64' }],
+        outputs: [
+            {
+                type: 'struct',
+                name: 'SubscriptionInfo',
+                members: [
+                    { name: 'expiry', type: 'core::integer::u64' },
+                    { name: 'tier', type: 'core::integer::u8' }
+                ]
+            }
+        ],
         state_mutability: 'view',
     },
     {
@@ -100,7 +111,7 @@ export async function subscribeToTier(account: AccountInterface, tier: number) {
     }
 }
 
-export async function getSubscription(userAddress: string): Promise<number> {
+export async function getSubscription(userAddress: string): Promise<{ expiry: number; tier: number }> {
     const provider = new RpcProvider({
         nodeUrl: getRpcUrl(),
     });
@@ -117,13 +128,44 @@ export async function getSubscription(userAddress: string): Promise<number> {
             return await contract.call('get_subscription', [userAddress]);
         });
 
-        // Handle both object and direct value returns
-        const expiry = typeof result === 'object' && result !== null ? (result as any).expiry : result;
-        console.log(`Subscription check for ${userAddress}: result=${result}, expiry=${expiry}`);
+        console.log(`DEBUG: Raw result for ${userAddress}:`, result);
 
-        return Number(expiry || 0);
+        // Handle different Starknet.js return formats:
+        let expiry = 0;
+        let tier = 1;
+
+        if (typeof result === 'object' && result !== null) {
+            const info = result as any;
+
+            // 1. Check for explicit struct fields (Ideal new format)
+            if (info.expiry !== undefined) {
+                expiry = Number(info.expiry);
+                tier = Number(info.tier !== undefined ? info.tier : 1);
+            }
+            // 2. Check for wrapped result: { SubscriptionInfo: 1234n }
+            else if (info.SubscriptionInfo !== undefined) {
+                expiry = Number(info.SubscriptionInfo);
+                tier = 1; // Default for legacy
+            }
+            // 3. Check for array-like result: [expiry, tier]
+            else if (info[0] !== undefined) {
+                expiry = Number(info[0]);
+                tier = Number(info[1] !== undefined ? info[1] : 1);
+            }
+            // 4. Final fallback for other object types
+            else {
+                expiry = Number(result || 0);
+            }
+        } else {
+            // 5. Direct legacy result (bigint or number)
+            expiry = Number(result || 0);
+        }
+
+        console.log(`Parsed Subscription: expiry=${expiry}, tier=${tier}`);
+
+        return { expiry, tier };
     } catch (error) {
         console.error('Get subscription error:', error);
-        return 0;
+        return { expiry: 0, tier: 0 };
     }
 }
