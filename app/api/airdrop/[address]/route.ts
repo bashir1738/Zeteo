@@ -5,39 +5,34 @@ import { getSubscription } from '@/app/lib/contract';
 const REDIS_URL = process.env.REDIS_URL || process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379';
 const IS_PROD = process.env.NODE_ENV === 'production';
 
-type LiveDrop = { project?: string; link?: string; status?: string };
-
-/**
- * Fetch live airdrops from DefiLlama based on tier limits.
- * Tier 1 = 0 live drops, Tier 2 = 5, Tier 3 = 20
- */
-async function fetchLiveAirdrops(tier: number, now: number) {
-    const maxLive = tier === 1 ? 0 : tier === 2 ? 5 : 20;
-    if (maxLive === 0) return [];
-    try {
-        const response = await fetch('https://api.llama.fi/airdrops');
-        if (!response.ok) return [];
-        const data = await response.json();
-        return (data || []).slice(0, maxLive).map((drop: LiveDrop) => ({
-            name: drop.project || 'Unknown Project',
-            url: drop.link || 'https://defillama.com/airdrops',
-            amount: 'Check eligibility',
-            status: drop.status === 'active' ? 'Claimable' : 'Potential',
-            expiry: now + 90 * 24 * 60 * 60,
-        }));
-    } catch {
-        console.warn('Live airdrop fetch failed');
-        return [];
-    }
-}
+// Curated airdrop opportunities (used for Tier 2 & 3)
+// These are real, well-known protocols with potential future airdrops
+const CURATED_AIRDROPS = [
+    { name: 'Starknet Odyssey', url: 'https://starknet.io', amount: '100-500 STRK', status: 'Potential' },
+    { name: 'LayerZero Airdrop', url: 'https://layerzero.network', amount: 'ZRO tokens', status: 'Potential' },
+    { name: 'zkSync Era Airdrop', url: 'https://zksync.io', amount: 'ZK tokens', status: 'Potential' },
+    { name: 'Scroll Airdrop', url: 'https://scroll.io', amount: 'SCR tokens', status: 'Potential' },
+    { name: 'Linea Airdrop', url: 'https://linea.build', amount: 'LINEA tokens', status: 'Potential' },
+    { name: 'Eigenlayer Restaking', url: 'https://eigenlayer.xyz', amount: 'EIGEN tokens', status: 'Claimable' },
+    { name: 'Etherfi Airdrop', url: 'https://ether.fi', amount: 'ETHFI tokens', status: 'Claimable' },
+    { name: 'Arbitrum Airdrop S2', url: 'https://arbitrum.io', amount: 'ARB tokens', status: 'Potential' },
+    { name: 'Base Ecosystem Grant', url: 'https://base.org', amount: 'TBD', status: 'Potential' },
+    { name: 'Optimism RetroPGF', url: 'https://optimism.io', amount: 'OP tokens', status: 'Potential' },
+];
 
 /**
  * Build a full airdrop response based on the on-chain subscription.
- * Merges Zeteo milestone drops with tier-gated live drops.
+ * Tier 1 = mock only, Tier 2 = 5 curated drops, Tier 3 = all drops
  */
 async function buildAirdropPayload(tier: number, expiryTimestamp: number) {
     const now = Math.floor(Date.now() / 1000);
-    const liveAirdrops = await fetchLiveAirdrops(tier, now);
+
+    // Tier 1: no curated drops, Tier 2: 5, Tier 3: all 10
+    const maxCurated = tier === 1 ? 0 : tier === 2 ? 5 : CURATED_AIRDROPS.length;
+    const curatedDrops = CURATED_AIRDROPS.slice(0, maxCurated).map(drop => ({
+        ...drop,
+        expiry: now + 90 * 24 * 60 * 60,
+    }));
 
     return {
         status: 'active_subscription',
@@ -52,7 +47,7 @@ async function buildAirdropPayload(tier: number, expiryTimestamp: number) {
                 status: 'Claimable',
                 expiry: now + 30 * 24 * 60 * 60,
             },
-            ...liveAirdrops,
+            ...curatedDrops,
         ],
     };
 }
