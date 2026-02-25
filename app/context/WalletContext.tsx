@@ -63,6 +63,10 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     }, [network]); // Dependencies kept but logic inside is more cautious
 
     useEffect(() => {
+        // Disabled auto-connection on mount to prevent wallet popups on page load.
+        // Connection should only be initiated by user action (e.g., clicking "Connect Wallet").
+
+        /* 
         const checkConnection = async () => {
             // Only attempt silent reconnect if user previously connected
             if (localStorage.getItem('starknet_connected') !== 'true') return;
@@ -107,7 +111,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             }
         };
         checkConnection();
-        // Removed [network] from dependencies to prevent the feedback loop on manual switch
+        */
     }, [createAccountFromWallet]);
 
     const connectWallet = useCallback(async (onConnected?: () => void) => {

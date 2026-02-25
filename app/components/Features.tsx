@@ -14,7 +14,7 @@ const features = [
     },
     {
         title: 'Airdrop Tracker',
-        description: 'Stay ahead of the curve with our real-time tracker for the most lucrative airdrops on Starknet.',
+        description: 'Stay ahead of the curve with our real-time tracker for the most lucrative airdrops on Starknet and other L2s.',
         icon: Search,
         color: 'text-purple-500',
     },
