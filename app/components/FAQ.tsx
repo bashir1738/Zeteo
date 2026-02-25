@@ -8,7 +8,7 @@ import BackgroundAnimation from './BackgroundAnimation';
 const faqs = [
     {
         question: 'What is Zeteo?',
-        answer: 'Zeteo is a premium dashboard built for the Starknet ecosystem. It helps users manage their digital assets, track eligible airdrops, and stay updated with the latest projects in a single, beautiful interface.',
+        answer: 'Zeteo is a premium dashboard built on the Starknet ecosystem. It helps users manage their digital assets, track eligible airdrops, and stay updated with the latest projects in a single, beautiful interface.',
     },
     {
         question: 'How do I connect my wallet?',

@@ -116,7 +116,7 @@ const Subscription = () => {
         <section id="pricing" className="relative py-32 px-4 overflow-hidden bg-[#050505] border-t border-white/5">
             <BackgroundAnimation />
 
-            <div className="max-w-7xl mx-auto relative z-10">
+            <div className="max-w-7xl mx-auto lg:px-8 relative z-10">
                 <motion.div
                     className="text-center mb-24 space-y-4"
                     initial={{ opacity: 0, y: 20 }}
