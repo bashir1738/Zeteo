@@ -7,6 +7,9 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "Zeteo - Airdrop Tracker",
   description: "Track and claim your crypto airdrops",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
