@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Wallet, LogOut, Menu, X } from 'lucide-react';
 import { useWallet } from '@/app/context/WalletContext';
+import Image from 'next/image';
 
 const Navbar = () => {
     const router = useRouter();
@@ -17,11 +18,9 @@ const Navbar = () => {
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <div className="shrink-0 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                            <span className="font-bold text-white">Z</span>
-                        </div>
+
                         <Link href="/" className="text-xl font-bold tracking-tight text-white">
-                            Zeteo
+                            <Image src="/logo.jpeg" alt="Logo" width={32} height={32} priority />
                         </Link>
                     </div>
 
