@@ -26,7 +26,7 @@ const calculateTimeLeft = (expiration: number) => {
 };
 
 const AirdropRow = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: boolean }) => (
-    <tr className="hover:bg-white/[0.02] transition-colors group">
+    <tr className="hover:bg-white/2 transition-colors group">
         <td className="p-4">
             <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-colors ${suggested
@@ -59,8 +59,8 @@ const AirdropRow = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: bool
                 href={airdrop.url}
                 target="_blank"
                 rel="noreferrer"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:translate-y-[-1px] ${suggested
-                    ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20'
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-px ${suggested
+                        ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20'
                     : 'bg-purple-600 hover:bg-purple-500 text-white'}`}
             >
                 {suggested ? 'Explore' : 'Claim Tokens'}
