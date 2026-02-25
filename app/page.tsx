@@ -10,7 +10,7 @@ export default function Home() {
       <footer className="py-12 bg-black/5 text-center flex flex-col items-center gap-6">
         <div className="flex items-center gap-6 border-b border-white/5 pb-6 w-full max-w-xs justify-center">
           <a
-            href="https://x.com/zeteo"
+            href="https://x.com/Zeteo_starknet"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-white transition-all transform hover:scale-110"
@@ -28,7 +28,7 @@ export default function Home() {
             <FaGithub className="w-5 h-5" />
           </a>
           <a
-            href="https://discord.gg/zeteo"
+            href="https://discord.gg/FdUvJe86"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-[#5865F2] transition-all transform hover:scale-110"
