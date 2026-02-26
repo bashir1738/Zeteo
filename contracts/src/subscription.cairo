@@ -9,6 +9,7 @@ pub struct SubscriptionInfo {
 #[starknet::interface]
 pub trait ISubscription<TContractState> {
     fn subscribe(ref self: TContractState, tier: u8);
+    fn subscribe_with_proof(ref self: TContractState, tier: u8, proof: Span<felt252>);
     fn get_subscription(self: @TContractState, user: ContractAddress) -> (u64, u8);
     fn get_tier(self: @TContractState, user: ContractAddress) -> u8;
     fn get_price(self: @TContractState, tier: u8) -> u256;
@@ -19,6 +20,11 @@ pub trait IPragmaOracle<TContractState> {
     fn get_data_median(self: @TContractState, data_type: u32) -> (u128, u32, u32, u32);
 }
 
+#[starknet::interface]
+pub trait IVerifier<TContractState> {
+    fn verify_proof(self: @TContractState, proof: Span<felt252>) -> bool;
+}
+
 #[starknet::contract]
 pub mod Subscription {
     use core::num::traits::Zero;
@@ -26,13 +32,14 @@ pub mod Subscription {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
-    use super::{IPragmaOracleDispatcher, SubscriptionInfo};
+    use super::{IVerifierDispatcher, IVerifierDispatcherTrait, SubscriptionInfo};
 
     #[storage]
     struct Storage {
         subscriptions: Map<ContractAddress, SubscriptionInfo>, // User -> Subscription Data
         owner: ContractAddress,
         oracle_address: ContractAddress,
+        verifier_address: ContractAddress, // For ZK-Proof verification (Garaga)
         eth_token_address: ContractAddress // For payment, if we were doing real transfers
     }
 
@@ -59,13 +66,18 @@ pub mod Subscription {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, oracle_address: ContractAddress, eth_address: ContractAddress,
+        ref self: ContractState,
+        oracle_address: ContractAddress,
+        eth_address: ContractAddress,
+        verifier_address: ContractAddress,
     ) {
         assert(!oracle_address.is_zero(), 'Oracle address cannot be 0');
         assert(!eth_address.is_zero(), 'ETH address cannot be 0');
+        assert(!verifier_address.is_zero(), 'Verifier address cannot be 0');
         self.owner.write(get_caller_address());
         self.oracle_address.write(oracle_address);
         self.eth_token_address.write(eth_address);
+        self.verifier_address.write(verifier_address);
     }
 
     #[abi(embed_v0)]
@@ -110,6 +122,17 @@ pub mod Subscription {
                         user: caller, tier: tier, expiry: new_expiry, timestamp: now,
                     },
                 );
+        }
+
+        fn subscribe_with_proof(ref self: ContractState, tier: u8, proof: Span<felt252>) {
+            let verifier = IVerifierDispatcher { contract_address: self.verifier_address.read() };
+
+            // In a real implementation with Garaga, we would verify the proof here
+            // For the hackathon demo, we check if the verifier returns true
+            assert(verifier.verify_proof(proof), 'Invalid ZK Proof');
+
+            // If proof is valid, proceed with same logic as subscribe
+            self.subscribe(tier);
         }
 
         fn get_subscription(self: @ContractState, user: ContractAddress) -> (u64, u8) {

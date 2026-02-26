@@ -1,4 +1,5 @@
 mod mock_oracle;
+pub mod mock_verifier;
 pub mod subscription;
 
 /// Interface representing `HelloContract`.

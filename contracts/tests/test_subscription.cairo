@@ -13,12 +13,15 @@ fn deploy_mock_oracle() -> ContractAddress {
 }
 
 fn deploy_subscription(
-    oracle_address: ContractAddress, eth_address: ContractAddress,
+    oracle_address: ContractAddress,
+    eth_address: ContractAddress,
+    verifier_address: ContractAddress,
 ) -> ContractAddress {
     let contract = declare("Subscription").unwrap().contract_class();
     let mut constructor_calldata = ArrayTrait::new();
     constructor_calldata.append(oracle_address.into());
     constructor_calldata.append(eth_address.into());
+    constructor_calldata.append(verifier_address.into());
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
     contract_address
 }
@@ -27,7 +30,8 @@ fn deploy_subscription(
 fn test_subscription_deployment() {
     let oracle_address: ContractAddress = 1.try_into().unwrap();
     let eth_address: ContractAddress = 2.try_into().unwrap();
-    let contract_address = deploy_subscription(oracle_address, eth_address);
+    let verifier_address: ContractAddress = 3.try_into().unwrap();
+    let contract_address = deploy_subscription(oracle_address, eth_address, verifier_address);
 
     assert(!contract_address.is_zero(), 'Deployment failed');
 }
@@ -36,7 +40,8 @@ fn test_subscription_deployment() {
 fn test_subscribe_success() {
     let oracle_address = deploy_mock_oracle();
     let eth_address: ContractAddress = 2.try_into().unwrap();
-    let contract_address = deploy_subscription(oracle_address, eth_address);
+    let verifier_address: ContractAddress = 3.try_into().unwrap();
+    let contract_address = deploy_subscription(oracle_address, eth_address, verifier_address);
     let dispatcher = ISubscriptionDispatcher { contract_address };
 
     let user: ContractAddress = 123.try_into().unwrap();
@@ -56,7 +61,8 @@ fn test_subscribe_success() {
 fn test_subscribe_invalid_tier() {
     let oracle_address: ContractAddress = 1.try_into().unwrap();
     let eth_address: ContractAddress = 2.try_into().unwrap();
-    let contract_address = deploy_subscription(oracle_address, eth_address);
+    let verifier_address: ContractAddress = 3.try_into().unwrap();
+    let contract_address = deploy_subscription(oracle_address, eth_address, verifier_address);
     let dispatcher = ISubscriptionDispatcher { contract_address };
 
     dispatcher.subscribe(4); // Invalid tier
@@ -68,8 +74,10 @@ fn test_constructor_zero_oracle() {
     let mut constructor_calldata = ArrayTrait::new();
     let oracle_address: ContractAddress = 0.try_into().unwrap();
     let eth_address: ContractAddress = 2.try_into().unwrap();
+    let verifier_address: ContractAddress = 3.try_into().unwrap();
     constructor_calldata.append(oracle_address.into());
     constructor_calldata.append(eth_address.into());
+    constructor_calldata.append(verifier_address.into());
 
     match contract.deploy(@constructor_calldata) {
         Result::Ok(_) => core::panic_with_felt252('Should have panicked'),

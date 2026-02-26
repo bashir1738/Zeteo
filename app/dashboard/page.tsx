@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
 import AirdropTable from '@/app/components/AirdropTable';
+import Portfolio from '@/app/components/Portfolio';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
@@ -70,7 +71,7 @@ export default function Dashboard() {
                     <div className="space-y-4">
                         <button
                             onClick={() => connectWallet()}
-                            className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                            className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 hover:cursor-pointer transition-colors"
                         >
                             Connect Wallet
                         </button>
@@ -138,7 +139,17 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <AirdropTable airdrops={airdropData?.airdrops || []} />
+            {/* Airdrop Section */}
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                </div>
+                <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden p-6 mb-8">
+                     <p className="text-gray-400 text-sm mb-4">
+                        Manage your active airdrop allocations and explore new opportunities based on your tier.
+                    </p>
+                    <AirdropTable airdrops={airdropData?.airdrops || []} />
+                </div>
+            </div>
         </div>
     );
 }
