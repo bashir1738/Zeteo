@@ -162,7 +162,7 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
                 contractAddress: CONTRACT_ADDRESS,
                 entrypoint: 'get_subscription',
                 calldata: [userAddress],
-            });
+            }, 'latest');
         });
 
         console.log(`Raw callContract result for ${userAddress}:`, result);
@@ -180,7 +180,7 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
                         contractAddress: CONTRACT_ADDRESS,
                         entrypoint: 'get_tier',
                         calldata: [userAddress],
-                    });
+                    }, 'latest');
                 });
                 if (tierResult && tierResult[0]) {
                     tier = Number(BigInt(tierResult[0]));
@@ -194,8 +194,10 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
 
         console.log(`Parsed Subscription: expiry=${expiry}, tier=${tier}`);
         return { expiry, tier };
-    } catch (error) {
-        console.error('Get subscription error:', error);
+    } catch (error: unknown) {
+        const rpcError = error as { message?: string; reason?: string };
+        const reason = rpcError?.reason || rpcError?.message || 'Unknown RPC error';
+        console.error('Get subscription error:', reason);
         return { expiry: 0, tier: 0 };
     }
 }
