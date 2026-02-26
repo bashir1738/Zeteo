@@ -50,12 +50,30 @@ async function main() {
         console.log(`   Class hash: ${declareResponse.class_hash}\n`);
 
         // Deploy the contract
-        console.log("🚢 Deploying contract instance...");
-        // Constructor args: oracle_address, eth_address
-        // Using Sepolia ETH address and a placeholder for oracle
+        console.log("🚢 Deploying contracts...");
+
+        // Step 1: Deploy MockVerifier first (required as 3rd constructor arg for Subscription)
+        console.log("   🔧 Deploying MockVerifier...");
+        const verifierSierraPath = path.join(__dirname, "contracts/target/dev/zeteo_MockVerifier.contract_class.json");
+        const verifierCasmPath = path.join(__dirname, "contracts/target/dev/zeteo_MockVerifier.compiled_contract_class.json");
+        const verifierSierra = json.parse(fs.readFileSync(verifierSierraPath, "utf8"));
+        const verifierCasm = json.parse(fs.readFileSync(verifierCasmPath, "utf8"));
+        const verifierDeclare = await account.declareIfNot({ contract: verifierSierra, casm: verifierCasm });
+        if (verifierDeclare.transaction_hash) {
+            await provider.waitForTransaction(verifierDeclare.transaction_hash);
+        }
+        const verifierDeploy = await account.deployContract({ classHash: verifierDeclare.class_hash, constructorCalldata: [] });
+        await provider.waitForTransaction(verifierDeploy.transaction_hash);
+        const verifierAddress = verifierDeploy.contract_address;
+        console.log(`   ✅ MockVerifier deployed at: ${verifierAddress}`);
+
+        // Step 2: Deploy Subscription with all 3 required constructor args
+        console.log("   🚢 Deploying Subscription contract...");
+        // Constructor args: oracle_address, eth_address, verifier_address
         const constructorArgs = CallData.compile([
             "0x02514876abc10f016f63112187a5523555ae99b1b0521e16f3f0196238b6935d", // Pragma Oracle Sepolia
-            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  // ETH on Starknet Sepolia
+            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", // ETH on Starknet Sepolia
+            verifierAddress // MockVerifier (ZK proof verifier for demo)
         ]);
         const deployResponse = await account.deployContract({
             classHash: declareResponse.class_hash,

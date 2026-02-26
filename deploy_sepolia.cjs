@@ -52,14 +52,30 @@ async function main() {
 
         // Deploy the contract
         console.log("🚢 Deploying contract instance...");
-        const constructorArgs = CallData.compile([
+        // First deploy the MockVerifier contract so we have a real address
+        console.log("🔧 Deploying MockVerifier first...");
+        const verifierSierraPath = path.join(__dirname, "contracts/target/dev/zeteo_MockVerifier.contract_class.json");
+        const verifierCasmPath = path.join(__dirname, "contracts/target/dev/zeteo_MockVerifier.compiled_contract_class.json");
+        const verifierSierra = json.parse(fs.readFileSync(verifierSierraPath, "utf8"));
+        const verifierCasm = json.parse(fs.readFileSync(verifierCasmPath, "utf8"));
+        const verifierDeclare = await account.declareIfNot({ contract: verifierSierra, casm: verifierCasm });
+        if (verifierDeclare.transaction_hash) {
+            await provider.waitForTransaction(verifierDeclare.transaction_hash);
+        }
+        const verifierDeploy = await account.deployContract({ classHash: verifierDeclare.class_hash, constructorCalldata: [] });
+        await provider.waitForTransaction(verifierDeploy.transaction_hash);
+        const verifierAddress = verifierDeploy.contract_address;
+        console.log("✅ MockVerifier deployed at: " + verifierAddress + "\n");
+
+        const subscriptionConstructorArgs = CallData.compile([
             "0x02514876abc10f016f63112187a5523555ae99b1b0521e16f3f0196238b6935d", // Pragma Oracle Sepolia
-            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"  // ETH Token Sepolia
+            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7", // ETH Token Sepolia
+            verifierAddress // MockVerifier deployed address
         ]);
 
         const deployResponse = await account.deployContract({
             classHash: declareResponse.class_hash,
-            constructorCalldata: constructorArgs
+            constructorCalldata: subscriptionConstructorArgs
         });
 
         console.log("   Transaction hash: " + deployResponse.transaction_hash);
