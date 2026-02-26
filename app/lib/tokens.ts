@@ -50,6 +50,14 @@ export const TOKENS: Record<Network, Token[]> = {
             address: '0x068f5c6a61780768455de69077e07e8978783947231454c6007e0573e3519c2',
             decimals: 6,
             icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=026'
+        },
+        {
+            id: 'wbtc-mainnet',
+            name: 'Wrapped Bitcoin',
+            symbol: 'WBTC',
+            address: '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac',
+            decimals: 8,
+            icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=026'
         }
     ],
     sepolia: [
@@ -76,6 +84,14 @@ export const TOKENS: Record<Network, Token[]> = {
             address: '0x0512feAc6339Ff7889822cb5aA2a86C848e9D392bB0E3E237C008674feeD8343',
             decimals: 6,
             icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=026'
+        },
+        {
+            id: 'wbtc-sepolia',
+            name: 'Wrapped Bitcoin',
+            symbol: 'WBTC',
+            address: '0x05f019056345ec4687be69d80d226a26df0f9ca2ccaf3f746777085a81ca5415', // Mock WBTC on Sepolia
+            decimals: 8,
+            icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=026'
         }
     ]
 };

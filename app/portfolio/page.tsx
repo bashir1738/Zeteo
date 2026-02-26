@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight, RefreshCw, Globe, FlaskConical } from 'lucide-react';
+import { ShieldAlert, TrendingUp, TrendingDown, Wallet, ArrowUpRight, RefreshCw, Globe, FlaskConical, Bitcoin } from 'lucide-react';
 import Link from 'next/link';
 import { TOKENS, Token } from '@/app/lib/tokens';
 import { fetchTokenBalances } from '@/app/lib/balance';
+import BitcoinBridge from '@/app/components/BitcoinBridge';
 
 export default function Portfolio() {
     const { isConnected, connectWallet, walletAddress, network: walletNetwork } = useWallet();
@@ -13,7 +14,6 @@ export default function Portfolio() {
     const [assets, setAssets] = useState<(Token & { balance: string; price: number; change24h: number })[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-    const [subscription, setSubscription] = useState<{ tier: number; expiry: number } | null>(null);
     // Use LOCAL state for the network view — not bound to WalletContext so user can freely switch
     const [viewNetwork, setViewNetwork] = useState<'mainnet' | 'sepolia'>(walletNetwork);
 
@@ -36,21 +36,15 @@ export default function Portfolio() {
     useEffect(() => {
         if (isConnected && walletAddress) {
             loadBalances();
-            // Fetch subscription info
-            fetch(`/api/airdrop/${walletAddress}`)
-                .then(r => r.ok ? r.json() : null)
-                .then(data => {
-                    if (data && data.tier) setSubscription({ tier: data.tier, expiry: data.expiry });
-                })
-                .catch(() => null);
         } else {
             setAssets([]);
-            setSubscription(null);
         }
     }, [isConnected, walletAddress, loadBalances]);
 
     // Calculate total value
     const totalValue = assets.reduce((acc, asset) => acc + (parseFloat(asset.balance) * asset.price), 0);
+    const btcAsset = assets.find(a => a.symbol === 'WBTC');
+    const btcValue = btcAsset ? (parseFloat(btcAsset.balance) * btcAsset.price) : 0;
 
     const filteredAssets = assets.filter(asset =>
         asset.name.toLowerCase().includes(filter.toLowerCase()) ||
@@ -91,19 +85,14 @@ export default function Portfolio() {
         <div className="min-h-screen py-12 px-4 md:px-8 max-w-7xl mx-auto pt-24">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Total Balance Card */}
-                <div className="md:col-span-2 bg-linear-to-br from-purple-900/40 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                <div className="md:col-span-1 bg-linear-to-br from-purple-900/40 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <Wallet className="w-5 h-5" />
                             <span className="text-sm font-medium uppercase tracking-wider">Total Balance</span>
-                            {subscription && (
-                                <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                    {['Basic', 'Standard', 'Premium'][subscription.tier - 1] ?? 'N/A'} Plan
-                                </span>
-                            )}
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
                             ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </h1>
                         <div className="flex items-center gap-2">
@@ -112,6 +101,23 @@ export default function Portfolio() {
                                 +4.5%
                             </div>
                             <span className="text-gray-500 text-sm">vs last 24h</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* BTC Net Worth Card */}
+                <div className="md:col-span-1 bg-linear-to-br from-orange-900/40 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-2 text-orange-400 mb-2">
+                            <Bitcoin className="w-5 h-5" />
+                            <span className="text-sm font-medium uppercase tracking-wider">BTC Net Worth</span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                            ${btcValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </h1>
+                        <div className="flex items-center gap-2">
+                            <span className="text-orange-500/80 text-xs font-bold uppercase tracking-tighter">Bitcoin Track Active</span>
                         </div>
                     </div>
                 </div>
@@ -133,7 +139,7 @@ export default function Portfolio() {
             </div>
 
             {/* Assets Table Section */}
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden mb-8">
                 <div className="p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-xl font-bold text-white">Your Assets</h2>
@@ -273,6 +279,15 @@ export default function Portfolio() {
                         )}
                     </div>
                 )}
+            </div>
+
+            {/* Bridge Section */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <div className="h-1 w-8 bg-orange-500 rounded-full"></div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">Onboard Your Bitcoin</h2>
+                </div>
+                <BitcoinBridge />
             </div>
         </div>
     );
