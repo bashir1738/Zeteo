@@ -26,6 +26,14 @@ const faqs = [
         question: 'Can I upgrade my plan later?',
         answer: 'Absolutely! You can upgrade your plan at any time. Our smart contracts will automatically calculate the remaining time on your current plan and apply it towards your new tier.',
     },
+    {
+        question: 'How does the Bitcoin Bridge work?',
+        answer: 'Zeteo integrates a trustless bridge that allows you to move Bitcoin assets into the Starknet ecosystem. This enables you to use your BTC holdings with Starknet dApps and protocols while maintaining security.',
+    },
+    {
+        question: 'What is ZK-Privacy Mode?',
+        answer: 'ZK-Privacy Mode uses Garaga-powered Zero-Knowledge proofs to verify your airdrop eligibility without revealing your specific wallet data on-chain. This ensures your financial privacy remains intact during the claim process.',
+    },
 ];
 
 const FAQItem = ({ question, answer, isOpen, onClick }: { question: string; answer: string; isOpen: boolean; onClick: () => void }) => {

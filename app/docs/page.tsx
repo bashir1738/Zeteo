@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Shield, Rocket, ArrowRight, CheckCircle2, Zap, Cpu } from 'lucide-react';
+import { BookOpen, Shield, Rocket, ArrowRight, CheckCircle2, Zap, Cpu, Repeat, Lock, TrendingUp } from 'lucide-react';
 import BackgroundAnimation from '../components/BackgroundAnimation';
 import Footer from '../components/Footer';
 
@@ -76,6 +76,100 @@ const sections = [
                     <button className="text-purple-400 text-sm font-medium flex items-center gap-1 hover:text-white transition-colors">
                         Read full guide <ArrowRight className="w-4 h-4" />
                     </button>
+                </div>
+            </div>
+        ),
+    },
+    {
+        id: 'bitcoin-bridge',
+        title: 'Bitcoin Bridge',
+        icon: <Repeat className="w-6 h-6 text-yellow-500" />,
+        content: (
+            <div className="space-y-4 text-gray-400 font-light">
+                <p>Zeteo provides a seamless, trustless gateway to bring your Bitcoin assets into the Starknet ecosystem.</p>
+                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-5 space-y-4">
+                    <div className="flex gap-4">
+                        <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-yellow-500 font-bold text-xs">1</span>
+                        </div>
+                        <p className="text-sm">Initiate a bridging request from any Bitcoin wallet.</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-yellow-500 font-bold text-xs">2</span>
+                        </div>
+                        <p className="text-sm">Verify the transaction on-chain via our decentralized verifier network.</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-yellow-500 font-bold text-xs">3</span>
+                        </div>
+                        <p className="text-sm">Receive wrapped BTC on Starknet, ready for liquidity provision or airdrop eligibility.</p>
+                    </div>
+                </div>
+            </div>
+        ),
+    },
+    {
+        id: 'zk-privacy',
+        title: 'ZK-Privacy (Garaga)',
+        icon: <Lock className="w-6 h-6 text-red-400" />,
+        content: (
+            <div className="space-y-4 text-gray-400 font-light">
+                <p>Security and privacy are core to Zeteo. Our integration with <strong>Garaga</strong> enables zero-knowledge verification for airdrop claims.</p>
+                <ul className="space-y-3">
+                    <li className="flex gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                        <span><strong>Data Shielding:</strong> Prove you meet eligibility criteria without exposing your wallet transaction history.</span>
+                    </li>
+                    <li className="flex gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                        <span><strong>Gas Efficiency:</strong> Optimized ZK-proofs that are cheaper to verify on-chain than standard signature checks.</span>
+                    </li>
+                    <li className="flex gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                        <span><strong>Non-Custodial:</strong> Privacy is handled entirely client-side; Zeteo never sees your sensitive data.</span>
+                    </li>
+                </ul>
+            </div>
+        ),
+    },
+    {
+        id: 'portfolio',
+        title: 'Live Portfolio',
+        icon: <TrendingUp className="w-6 h-6 text-green-400" />,
+        content: (
+            <div className="space-y-4 text-gray-400 font-light">
+                <p>Track your entire Starknet wealth with our high-fidelity portfolio tracking system.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h4 className="text-white font-medium mb-1">Real-time Valuation</h4>
+                        <p className="text-xs">Live price feeds from multiple oracles ensured accurate USD balances.</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h4 className="text-white font-medium mb-1">Asset Distribution</h4>
+                        <p className="text-xs">Visual breakdown of your holdings across tokens and protocols.</p>
+                    </div>
+                </div>
+            </div>
+        ),
+    },
+    {
+        id: 'troubleshooting',
+        title: 'Troubleshooting',
+        icon: <Zap className="w-6 h-6 text-red-400" />,
+        content: (
+            <div className="space-y-4 text-gray-400 font-light">
+                <p>Common issues and their resolutions for the Zeteo platform.</p>
+                <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h4 className="text-white font-medium mb-1">&quot;Failed to determine starting block&quot;</h4>
+                        <p className="text-xs">This error (often `SIMULATE_AND_REVIEW_FAILED`) typically indicates a connectivity issue with the Starknet RPC provider. Check your network connection and verify your `NEXT_PUBLIC_STARKNET_RPC_URL` in `.env.local`.</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h4 className="text-white font-medium mb-1">Wallet Connection Failed</h4>
+                        <p className="text-xs">Ensure you have Argent X or Braavos installed and set to the correct network (Sepolia/Mainnet) matching the Zeteo configuration.</p>
+                    </div>
                 </div>
             </div>
         ),

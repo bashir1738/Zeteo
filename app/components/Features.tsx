@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Wallet, Search, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Wallet, Search, TrendingUp, ShieldCheck, Lock, Repeat } from 'lucide-react';
 import BackgroundAnimation from './BackgroundAnimation';
 
 const features = [
@@ -29,6 +29,18 @@ const features = [
         description: 'Unlock exclusive insights and advanced features with our flexible subscription plans.',
         icon: ShieldCheck,
         color: 'text-orange-500',
+    },
+    {
+        title: 'ZK-Privacy Claims',
+        description: 'Leverage Garaga-powered ZK-proofs to claim allocations anonymously and protect your data.',
+        icon: Lock,
+        color: 'text-red-500',
+    },
+    {
+        title: 'Bitcoin Bridge',
+        description: 'Trustlessly move your Bitcoin assets into Starknet to maximize your yield and participation.',
+        icon: Repeat,
+        color: 'text-yellow-500',
     },
 ];
 

@@ -4,22 +4,19 @@ Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosyst
 
 ---
 
-##  Key Features
-
 - **Starknet Wallet Integration**: Connect seamlessly with Argent X or Braavos wallets.
-- **Interactive Portfolio**: View and manage your cryptocurrencies associated with your Starknet address.
-- **Airdrop Tracker**: Stay updated with active allocations and claim your tokens directly.
-- **Subscription Management**: Access premium features through tiered subscription plans.
+- **Interactive Portfolio Tracking**: Real-time monitoring of your digital assets on Starknet.
+- **ZK-Privacy Airdrop Claims**: Securely claim allocations using Garaga-powered ZK-proofs to protect your eligibility data.
+- **Bitcoin Bridge**: Integrated trustless bridging capabilities for Bitcoin assets.
+- **Subscription Management**: Access premium features through tiered plans (Basic, Standard, Premium).
 - **Stunning UI/UX**: Built with a "liquid glass" aesthetic, featuring smooth animations and a responsive design.
 
 ---
 
-##  Tech Stack
-
-- **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [React 19](https://react.js.org/)
+- **Frontend**: [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.js.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/)
-- **Blockchain**: [Starknet.js](https://www.starknetjs.com/), [@starknet-io/get-starknet](https://github.com/starknet-io/get-starknet)
-- **State/Data**: [Redis](https://redis.io/) (via `redis` package)
+- **Blockchain**: [Starknet.js](https://www.starknetjs.com/), [Garaga](https://github.com/keep-starknet-strange/garaga) (ZK-Proof Verification)
+- **State/Data**: [Redis](https://redis.io/)
 - **Icons**: [Lucide React](https://lucide.dev/), [React Icons](https://react-icons.github.io/react-icons/)
 
 ---
@@ -80,8 +77,12 @@ Zeteo offers tiered subscription plans (Basic, Standard, Premium). Subscribing u
 ### 3. Using the Dashboard
 Once subscribed and connected, the **Dashboard** (`/dashboard`) becomes your mission control. It displays:
 - Your current subscription plan and expiry date.
-- A filtered table of eligible airdrops.
-- Direct links to claim allocations.
+- **Live Portfolio**: Track your token balances and values in real-time.
+- **Airdrop Management**: View eligible and suggested airdrops.
+- **ZK-Privacy Mode**: Toggle ZK-Privacy to claim allocations without revealing your full eligibility profile on-chain.
+
+### 4. Bitcoin Bridging
+Users can utilize the integrated Bitcoin Bridge component to move assets trustlessly into the Starknet ecosystem for use with Zeteo-supported protocols.
 
 ---
 
