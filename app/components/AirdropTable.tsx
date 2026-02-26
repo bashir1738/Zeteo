@@ -39,6 +39,7 @@ const AirdropRow = ({
     onPrivateCheck?: (name: string) => void;
     onPrivateClaim?: (name: string) => void;
 }) => (
+const AirdropRow = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: boolean }) => (
     <tr className="hover:bg-white/2 transition-colors group">
         <td className="p-4">
             <div className="flex items-center gap-4">
@@ -112,6 +113,17 @@ const AirdropRow = ({
                     <ExternalLink className="w-4 h-4" />
                 </a>
             )}
+            <a
+                href={airdrop.url}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-px ${suggested
+                        ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20'
+                    : 'bg-purple-600 hover:bg-purple-500 text-white'}`}
+            >
+                {suggested ? 'Explore' : 'Claim Tokens'}
+                <ExternalLink className="w-4 h-4" />
+            </a>
         </td>
     </tr>
 );
