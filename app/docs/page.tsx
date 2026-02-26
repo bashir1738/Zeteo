@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Shield, Rocket, HelpCircle, ArrowRight, CheckCircle2, Zap, Globe, Cpu } from 'lucide-react';
+import { BookOpen, Shield, Rocket, ArrowRight, CheckCircle2, Zap, Cpu } from 'lucide-react';
 import BackgroundAnimation from '../components/BackgroundAnimation';
 import Footer from '../components/Footer';
 
@@ -13,7 +13,7 @@ const sections = [
         icon: <Rocket className="w-6 h-6 text-purple-400" />,
         content: (
             <div className="space-y-4 text-gray-400 font-light">
-                <p>Welcome to Zeteo, the next-generation airdrop tracking platform. To get started, connect your Web3 wallet using the "Connect Wallet" button in the navigation bar.</p>
+                <p>Welcome to Zeteo, the next-generation airdrop tracking platform. To get started, connect your Web3 wallet using the &quot;Connect Wallet&quot; button in the navigation bar.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                         <h4 className="text-white font-medium mb-2 flex items-center gap-2">
@@ -71,7 +71,7 @@ const sections = [
             <div className="space-y-4 text-gray-400 font-light">
                 <p>Maximize your rewards by following our curated strategies and participation guides.</p>
                 <div className="bg-linear-to-r from-purple-500/10 to-blue-500/10 border border-white/10 rounded-2xl p-6 mt-4">
-                    <h4 className="text-white font-semibold mb-3">The "Power User" Approach</h4>
+                    <h4 className="text-white font-semibold mb-3">The &quot;Power User&quot; Approach</h4>
                     <p className="text-sm mb-4">Focus on protocols with high TVL and consistent development activity. Often, early participation in governance and liquidity provision leads to larger allocations.</p>
                     <button className="text-purple-400 text-sm font-medium flex items-center gap-1 hover:text-white transition-colors">
                         Read full guide <ArrowRight className="w-4 h-4" />
