@@ -1,10 +1,10 @@
-# Zeteo 🌌
+# Zeteo 
 
 Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosystem. It serves as a central hub for users to manage their digital assets, monitor subscription plans, and track eligible airdrops with a focus on visual excellence and seamless user experience.
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 - **Starknet Wallet Integration**: Connect seamlessly with Argent X or Braavos wallets.
 - **Interactive Portfolio**: View and manage your cryptocurrencies associated with your Starknet address.
@@ -14,7 +14,7 @@ Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosyst
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router), [React 19](https://react.js.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/)
@@ -24,7 +24,7 @@ Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosyst
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosyst
 
 ---
 
-## 🏗️ Platform Architecture
+##  Platform Architecture
 
 Zeteo is designed with a modern decoupled architecture:
 
@@ -69,7 +69,7 @@ Zeteo is designed with a modern decoupled architecture:
 
 ---
 
-## 📖 How it Works
+##  How it Works
 
 ### 1. Connecting Your Wallet
 Upon entering Zeteo, users can connect their Starknet wallet via the navigation bar. This establishes a secure connection to fetch the wallet address and interact with the blockchain.
@@ -85,7 +85,7 @@ Once subscribed and connected, the **Dashboard** (`/dashboard`) becomes your mis
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 ├── app/              # Next.js App Router (Pages, Components, API, Context)
@@ -98,10 +98,10 @@ Once subscribed and connected, the **Dashboard** (`/dashboard`) becomes your mis
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
