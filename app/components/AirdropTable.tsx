@@ -38,140 +38,134 @@ const AirdropRow = ({
     isPrivateMode?: boolean;
     onPrivateCheck?: (name: string) => void;
     onPrivateClaim?: (name: string) => void;
-}) => (
-const AirdropRow = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: boolean }) => (
-    <tr className="hover:bg-white/2 transition-colors group">
-        <td className="p-4">
-            <div className="flex items-center gap-4">
-                <div className={clsx(
-                    "w-10 h-10 rounded-lg flex items-center justify-center border transition-all duration-300",
-                    isPrivateMode ? "bg-white/5 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]" :
-                        suggested ? "bg-[#111] border-white/5 group-hover:border-yellow-500/30" :
-                            "bg-[#111] border-white/5 group-hover:border-purple-500/50"
-                )}>
-                    {isPrivateMode ? (
-                        <Shield className="w-5 h-5 text-white animate-pulse" />
-                    ) : suggested ? (
-                        <Lightbulb className="w-5 h-5 text-yellow-500/60 group-hover:text-yellow-400" />
-                    ) : (
-                        <Rocket className="w-5 h-5 text-gray-400 group-hover:text-purple-500" />
-                    )}
-                </div>
-                <div>
-                    <div className="font-bold text-white text-sm flex items-center gap-2">
-                        {airdrop.name}
-                        {isPrivateMode && <Lock size={12} className="text-gray-500" />}
+}) => {
+    return (
+        <tr className="hover:bg-white/2 transition-colors group">
+            <td className="p-4">
+                <div className="flex items-center gap-4">
+                    <div className={clsx(
+                        "w-10 h-10 rounded-lg flex items-center justify-center border transition-all duration-300",
+                        isPrivateMode ? "bg-white/5 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]" :
+                            suggested ? "bg-[#111] border-white/5 group-hover:border-yellow-500/30" :
+                                "bg-[#111] border-white/5 group-hover:border-purple-500/50"
+                    )}>
+                        {isPrivateMode ? (
+                            <Shield className="w-5 h-5 text-white animate-pulse" />
+                        ) : suggested ? (
+                            <Lightbulb className="w-5 h-5 text-yellow-500/60 group-hover:text-yellow-400" />
+                        ) : (
+                            <Rocket className="w-5 h-5 text-gray-400 group-hover:text-purple-500" />
+                        )}
                     </div>
-                    <div className="text-[10px] text-purple-400/70 font-mono mt-0.5">
-                        {calculateTimeLeft(airdrop.expiry)}
+                    <div>
+                        <div className="font-bold text-white text-sm flex items-center gap-2">
+                            {airdrop.name}
+                            {isPrivateMode && <Lock size={12} className="text-gray-500" />}
+                        </div>
+                        <div className="text-[10px] text-purple-400/70 font-mono mt-0.5">
+                            {calculateTimeLeft(airdrop.expiry)}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td className="p-4">
+                <span className={clsx(
+                    "font-mono text-sm px-3 py-1.5 rounded-md border transition-all",
+                    isPrivateMode ? "bg-white/5 border-white/20 text-white blur-xs hover:blur-none cursor-help" : "bg-[#111] border-white/5 text-gray-300"
+                )}>
+                    {isPrivateMode ? 'HIDDEN_AMT' : airdrop.amount}
+                </span>
+            </td>
+            <td className="p-4">
+                <span className="text-sm text-gray-400">
+                    {new Date(airdrop.expiry * 1000).toLocaleDateString()}
+                </span>
+            </td>
+            <td className="p-4 text-center">
+                {isPrivateMode ? (
+                    <div className="flex items-center justify-center gap-2">
+                        <button
+                            onClick={() => onPrivateCheck?.(airdrop.name)}
+                            className="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all group/btn"
+                            title="Check Privately via ZK-Proof"
+                        >
+                            <Fingerprint size={18} className="group-hover/btn:scale-110 transition-transform" />
+                        </button>
+                        <button
+                            onClick={() => onPrivateClaim?.(airdrop.name)}
+                            className="px-4 py-2 rounded-lg bg-white text-black font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition-all shadow-lg"
+                        >
+                            <Lock size={14} />
+                            Claim (ZK)
+                        </button>
+                    </div>
+                ) : (
+                    <a
+                        href={airdrop.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={clsx(
+                            "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-px",
+                            suggested ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20' : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                        )}
+                    >
+                        {suggested ? 'Explore' : 'Claim Tokens'}
+                        <ExternalLink className="w-4 h-4" />
+                    </a>
+                )}
+            </td>
+        </tr>
+    );
+};
+
+const MobileAirdropCard = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: boolean }) => {
+    return (
+        <div className={`p-4 rounded-xl border space-y-3 ${suggested
+            ? 'bg-yellow-500/5 border-yellow-500/10'
+            : 'bg-white/5 border-white/5'}`}>
+            <div className="flex justify-between items-start">
+                <div>
+                    <h3 className="font-bold text-lg text-white">{airdrop.name}</h3>
+                    {suggested && <span className="text-[10px] text-yellow-400 font-mono uppercase tracking-wider">Suggestion</span>}
+                </div>
+                <div className="text-right">
+                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Allocation</div>
+                    <div className="font-mono font-bold text-white">{airdrop.amount}</div>
+                    <div className="mt-2 text-xs text-gray-400">
+                        Exp: {new Date(airdrop.expiry * 1000).toLocaleDateString()}
                     </div>
                 </div>
             </div>
-        </td>
-        <td className="p-4">
-            <span className={clsx(
-                "font-mono text-sm px-3 py-1.5 rounded-md border transition-all",
-                isPrivateMode ? "bg-white/5 border-white/20 text-white blur-xs hover:blur-none cursor-help" : "bg-[#111] border-white/5 text-gray-300"
-            )}>
-                {isPrivateMode ? 'HIDDEN_AMT' : airdrop.amount}
-            </span>
-        </td>
-        <td className="p-4">
-            <span className="text-sm text-gray-400">
-                {new Date(airdrop.expiry * 1000).toLocaleDateString()}
-            </span>
-        </td>
-        <td className="p-4 text-center">
-            {isPrivateMode ? (
-                <div className="flex items-center justify-center gap-2">
-                    <button
-                        onClick={() => onPrivateCheck?.(airdrop.name)}
-                        className="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all group/btn"
-                        title="Check Privately via ZK-Proof"
-                    >
-                        <Fingerprint size={18} className="group-hover/btn:scale-110 transition-transform" />
-                    </button>
-                    <button
-                        onClick={() => onPrivateClaim?.(airdrop.name)}
-                        className="px-4 py-2 rounded-lg bg-white text-black font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition-all shadow-lg"
-                    >
-                        <Lock size={14} />
-                        Claim (ZK)
-                    </button>
-                </div>
-            ) : (
+            <div className="flex justify-between items-center py-3 border-t border-white/5 mt-2">
+                <span className="font-mono text-xs text-purple-400">{calculateTimeLeft(airdrop.expiry)}</span>
                 <a
                     href={airdrop.url}
                     target="_blank"
                     rel="noreferrer"
-                    className={clsx(
-                        "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-px",
-                        suggested ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20' : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-                    )}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${suggested
+                        ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
+                        : 'bg-white text-black hover:bg-gray-200'}`}
                 >
-                    {suggested ? 'Explore' : 'Claim Tokens'}
+                    {suggested ? 'Explore' : 'Claim'}
                     <ExternalLink className="w-4 h-4" />
                 </a>
-            )}
-            <a
-                href={airdrop.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-px ${suggested
-                        ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20'
-                    : 'bg-purple-600 hover:bg-purple-500 text-white'}`}
-            >
-                {suggested ? 'Explore' : 'Claim Tokens'}
-                <ExternalLink className="w-4 h-4" />
-            </a>
-        </td>
-    </tr>
-);
-
-const MobileAirdropCard = ({ airdrop, suggested }: { airdrop: Airdrop; suggested?: boolean }) => (
-    <div className={`p-4 rounded-xl border space-y-3 ${suggested
-        ? 'bg-yellow-500/5 border-yellow-500/10'
-        : 'bg-white/5 border-white/5'}`}>
-        <div className="flex justify-between items-start">
-            <div>
-                <h3 className="font-bold text-lg text-white">{airdrop.name}</h3>
-                {suggested && <span className="text-[10px] text-yellow-400 font-mono uppercase tracking-wider">Suggestion</span>}
-            </div>
-            <div className="text-right">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Allocation</div>
-                <div className="font-mono font-bold text-white">{airdrop.amount}</div>
-                <div className="mt-2 text-xs text-gray-400">
-                    Exp: {new Date(airdrop.expiry * 1000).toLocaleDateString()}
-                </div>
             </div>
         </div>
-        <div className="flex justify-between items-center py-3 border-t border-white/5 mt-2">
-            <span className="font-mono text-xs text-purple-400">{calculateTimeLeft(airdrop.expiry)}</span>
-            <a
-                href={airdrop.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${suggested
-                    ? 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20'
-                    : 'bg-white text-black hover:bg-gray-200'}`}
-            >
-                {suggested ? 'Explore' : 'Claim'}
-                <ExternalLink className="w-4 h-4" />
-            </a>
-        </div>
-    </div>
-);
+    );
+};
 
-const TableHeader = ({ isPrivateMode }: { isPrivateMode?: boolean }) => (
-    <thead>
-        <tr className="bg-[#111] text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-white/5">
-            <th className="p-4">Project Name</th>
-            <th className="p-4">{isPrivateMode ? 'Confidential Amount' : 'Allocation'}</th>
-            <th className="p-4">Expires</th>
-            <th className="p-4 text-center">Action</th>
-        </tr>
-    </thead>
-);
+const TableHeader = ({ isPrivateMode }: { isPrivateMode?: boolean }) => {
+    return (
+        <thead>
+            <tr className="bg-[#111] text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-white/5">
+                <th className="p-4">Project Name</th>
+                <th className="p-4">{isPrivateMode ? 'Confidential Amount' : 'Allocation'}</th>
+                <th className="p-4">Expires</th>
+                <th className="p-4 text-center">Action</th>
+            </tr>
+        </thead>
+    );
+};
 
 const AirdropTable = ({ airdrops }: AirdropTableProps) => {
     const [isPrivateMode, setIsPrivateMode] = React.useState(false);
