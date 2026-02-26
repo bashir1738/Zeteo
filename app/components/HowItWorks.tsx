@@ -12,13 +12,13 @@ const steps = [
         icon: LinkIcon,
     },
     {
-        title: 'Choose Your Plan',
-        description: 'Select a tiered subscription that suits your tracking needs and unlocks premium features.',
+        title: 'Bridge & Subscribe',
+        description: 'Move assets via our Bitcoin Bridge and select a tiered plan to unlock high-performance tracking.',
         icon: Sparkles,
     },
     {
-        title: 'Profit & Track',
-        description: 'Access your personalized dashboard to monitor airdrops, claim deadlines, and portfolio performance.',
+        title: 'Track & Claim (ZK)',
+        description: 'Monitor your portfolio in real-time and claim allocations privately using ZK-proofs.',
         icon: LayoutDashboard,
     },
 ];
