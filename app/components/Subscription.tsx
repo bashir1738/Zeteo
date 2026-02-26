@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, Star, Zap, Diamond } from 'lucide-react';
+import { Check, Star, Zap, Diamond, Shield, Lock, CheckCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { useWallet } from '@/app/context/WalletContext';
 import { motion } from 'framer-motion';
@@ -50,6 +50,7 @@ const Subscription = () => {
     const [loadingTier, setLoadingTier] = useState<number | null>(null);
     const [starkPrice, setStarkPrice] = useState<number | null>(null);
     const [currentSubscription, setCurrentSubscription] = useState<{ tier: number; expiry: number } | null>(null);
+    const [isPrivateMode, setIsPrivateMode] = useState(false);
 
     useEffect(() => {
         const loadPrice = async () => {
@@ -76,7 +77,7 @@ const Subscription = () => {
         loadSubscription();
     }, [isConnected, account?.address]);
 
-    const handleSelect = async (planName: string, tierIndex: number) => {
+    const handleSelect = async (_planName: string, tierIndex: number) => {
         if (!isConnected) {
             connectWallet();
             return;
@@ -91,10 +92,18 @@ const Subscription = () => {
             setLoadingTier(tierIndex);
             setStatusState({ tier: tierIndex, message: 'Preparing transaction...' });
 
-            const { subscribeToTier } = await import('@/app/lib/contract');
+            const { subscribeToTier, subscribeWithProof } = await import('@/app/lib/contract');
 
-            setStatusState({ tier: tierIndex, message: 'Waiting for wallet approval...' });
-            const result = await subscribeToTier(account, tierIndex + 1);
+            setStatusState({ tier: tierIndex, message: isPrivateMode ? 'Generating ZK-Proof...' : 'Waiting for wallet approval...' });
+
+            let result;
+            if (isPrivateMode) {
+                // Mock ZK-Proof generation for demo
+                const mockProof = ['0x1', '0x2', '0x3'];
+                result = await subscribeWithProof(account, tierIndex + 1, mockProof);
+            } else {
+                result = await subscribeToTier(account, tierIndex + 1);
+            }
 
             setStatusState({ tier: tierIndex, message: 'Transaction submitted. Waiting for confirmation...' });
             console.log('Transaction hash:', result.transaction_hash);
@@ -133,6 +142,36 @@ const Subscription = () => {
                     <p className="text-gray-400 text-lg max-w-2xl mx-auto font-light">
                         Flexible plans designed to scale with your portfolio.
                     </p>
+
+                    {/* Privacy Toggle (Hackathon Feature) */}
+                    <div className="flex justify-center mt-8">
+                        <div className="p-1 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-1">
+                            <button
+                                onClick={() => setIsPrivateMode(false)}
+                                className={clsx(
+                                    "px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+                                    !isPrivateMode ? "bg-purple-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+                                )}
+                            >
+                                <CheckCircle size={16} />
+                                Standard
+                            </button>
+                            <button
+                                onClick={() => setIsPrivateMode(true)}
+                                className={clsx(
+                                    "px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 relative overflow-hidden group",
+                                    isPrivateMode ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-white"
+                                )}
+                            >
+                                <Lock size={16} />
+                                Private (ZK-Proof)
+                                {isPrivateMode && <div className="absolute inset-0 bg-linear-to-r from-transparent via-purple-500/10 to-transparent animate-shimmer" />}
+                                <div className="absolute -top-1 -right-1">
+                                    <span className="flex h-2 w-2 rounded-full bg-purple-500 animate-ping opacity-75" />
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                 </motion.div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
@@ -191,22 +230,27 @@ const Subscription = () => {
                                         onClick={() => handleSelect(plan.name, index)}
                                         disabled={loadingTier !== null}
                                         className={clsx(
-                                            "w-full py-4 rounded-lg font-bold text-sm hover:cursor-pointer transition-all border",
+                                            "w-full py-4 rounded-lg font-bold text-sm hover:cursor-pointer transition-all border relative overflow-hidden group",
                                             loadingTier !== null && "opacity-50 cursor-not-allowed",
-                                            plan.popular
-                                                ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"
-                                                : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
+                                            isPrivateMode
+                                                ? "bg-white text-black border-transparent hover:bg-gray-200"
+                                                : plan.popular
+                                                    ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-500"
+                                                    : "bg-transparent text-white border-white/10 hover:border-white/30 hover:bg-white/5"
                                         )}
                                     >
-                                        {loadingTier === index
-                                            ? 'Processing...'
-                                            : !currentSubscription || currentSubscription.expiry < Math.floor(Date.now() / 1000)
-                                                ? 'Select Plan'
-                                                : currentSubscription.tier === index + 1
-                                                    ? 'Extend Plan'
-                                                    : currentSubscription.tier < index + 1
-                                                        ? 'Upgrade Plan'
-                                                        : 'Switch Plan'}
+                                        <div className="flex items-center justify-center gap-2">
+                                            {isPrivateMode && <Shield className="w-4 h-4" />}
+                                            {loadingTier === index
+                                                ? 'Processing...'
+                                                : !currentSubscription || currentSubscription.expiry < Math.floor(Date.now() / 1000)
+                                                    ? (isPrivateMode ? 'Private Subscribe' : 'Select Plan')
+                                                    : currentSubscription.tier === index + 1
+                                                        ? 'Extend Plan'
+                                                        : currentSubscription.tier < index + 1
+                                                            ? 'Upgrade Plan'
+                                                            : 'Switch Plan'}
+                                        </div>
                                     </button>
 
                                     {currentSubscription && currentSubscription.expiry > Math.floor(Date.now() / 1000) && (

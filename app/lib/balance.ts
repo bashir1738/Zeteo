@@ -32,7 +32,8 @@ export async function fetchTokenBalances(
         'STRK': 'starknet',
         'USDC': 'usd-coin',
         'USDT': 'tether',
-        'DAI': 'dai'
+        'DAI': 'dai',
+        'WBTC': 'wrapped-bitcoin'
     };
 
     const ids = tokens.map(t => cgIds[t.symbol]).filter(Boolean).join(',');
@@ -80,11 +81,12 @@ export async function fetchTokenBalances(
                 price: priceData?.usd || 0,
                 change24h: priceData?.usd_24h_change || 0
             };
-        } catch (error: any) {
-            const errorMessage = error?.message || error?.toString() || '';
+        } catch (error: unknown) {
+            const { message, code } = error as { message?: string; code?: number };
+            const errorMessage = message || String(error) || '';
             const isContractNotFound = errorMessage.includes('Contract not found') ||
-                (error?.code === 20) ||
-                (error?.code === -32603 && errorMessage.includes('20'));
+                (code === 20) ||
+                (code === -32603 && errorMessage.includes('20'));
 
             if (isContractNotFound) {
                 console.warn(`Token ${token.symbol} not found on ${network}. Skipping.`);

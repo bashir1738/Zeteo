@@ -66,6 +66,16 @@ export const SUBSCRIPTION_ABI = [
         state_mutability: 'external',
     },
     {
+        name: 'subscribe_with_proof',
+        type: 'function',
+        inputs: [
+            { name: 'tier', type: 'core::integer::u8' },
+            { name: 'proof', type: 'core::array::Span::<core::felt252>' }
+        ],
+        outputs: [],
+        state_mutability: 'external',
+    },
+    {
         name: 'get_subscription',
         type: 'function',
         inputs: [{ name: 'user', type: 'core::starknet::contract_address::ContractAddress' }],
@@ -113,6 +123,29 @@ export async function subscribeToTier(account: AccountInterface, tier: number) {
     }
 }
 
+export async function subscribeWithProof(account: AccountInterface, tier: number, proof: string[]) {
+    if (!account) throw new Error('No account connected');
+
+    const contract = new Contract({
+        abi: SUBSCRIPTION_ABI,
+        address: CONTRACT_ADDRESS,
+        providerOrAccount: account,
+    });
+
+    try {
+        const result = await withRetry(async () => {
+            // proof is Span<felt252> in Cairo
+            return await contract.invoke('subscribe_with_proof', [tier, proof]);
+        });
+
+        await account.waitForTransaction(result.transaction_hash);
+        return result;
+    } catch (error) {
+        console.error('ZK Subscription error:', error);
+        throw error;
+    }
+}
+
 export async function getSubscription(userAddress: string): Promise<{ expiry: number; tier: number }> {
     const provider = new RpcProvider({
         nodeUrl: getRpcUrl(),
@@ -153,7 +186,7 @@ export async function getSubscription(userAddress: string): Promise<{ expiry: nu
                     tier = Number(BigInt(tierResult[0]));
                     console.log(`Fallback get_tier successful: tier=${tier}`);
                 }
-            } catch (e) {
+            } catch {
                 // get_tier likely doesn't exist yet on-chain
                 console.log('get_tier fallback failed (likely not deployed yet)');
             }
