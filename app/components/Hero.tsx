@@ -112,7 +112,7 @@ const Hero = () => {
                         return (
                             <motion.div
                                 key={index}
-                                className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                                className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden  shadow-2xl"
                                 animate={{
                                     scale: 1 - offset * 0.06,
                                     y: -(offset * 45),
