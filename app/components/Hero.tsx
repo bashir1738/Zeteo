@@ -1,21 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@/app/context/WalletContext';
 import { ArrowRight, ChevronDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import BackgroundAnimation from './BackgroundAnimation';
 
 const Hero = () => {
     const { isConnected } = useWallet();
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const images = ['/banner1.png', '/banner2.png'];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % images.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
 
     const scrollToPricing = () => {
         const pricingSection = document.getElementById('pricing');
         if (pricingSection) {
             pricingSection.scrollIntoView({ behavior: 'smooth' });
         }
-    }; 
+    };
 
     return (
         <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-20">
@@ -24,7 +33,7 @@ const Hero = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="space-y-8 max-w-4xl relative z-10"
+                className="space-y-8 w-full max-w-7xl relative z-10 mx-auto"
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -90,6 +99,36 @@ const Hero = () => {
                     >
                         Read Documentation
                     </Link>
+                </motion.div>
+
+                <motion.div
+                    className="relative w-full max-w-5xl mx-auto mt-24 aspect-video"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9, duration: 0.8 }}
+                >
+                    {images.map((img, index) => {
+                        const offset = (index - currentImageIndex + images.length) % images.length;
+                        return (
+                            <motion.div
+                                key={index}
+                                className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                                animate={{
+                                    scale: 1 - offset * 0.06,
+                                    y: -(offset * 45),
+                                    zIndex: images.length - offset,
+                                    opacity: offset === 2 ? 0.3 : 1 - offset * 0.2,
+                                }}
+                                transition={{ duration: 0.8, ease: 'easeInOut' }}
+                            >
+                                <img
+                                    src={img}
+                                    alt={`Banner ${index + 1}`}
+                                    className="w-full h-full  object-contain"
+                                />
+                            </motion.div>
+                        );
+                    })}
                 </motion.div>
             </motion.div>
         </section>
