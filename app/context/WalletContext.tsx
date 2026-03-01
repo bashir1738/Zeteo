@@ -68,7 +68,10 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             if (localStorage.getItem('starknet_connected') !== 'true') return;
 
             try {
-                const wallet = await connect({ modalMode: 'neverAsk' }) as ExtendedStarknetWindow;
+                const wallet = await connect({
+                    modalMode: 'neverAsk',
+                    include: ['argentX', 'braavos', 'xverse']
+                }) as ExtendedStarknetWindow;
 
                 if (!wallet) {
                     return;
@@ -112,7 +115,10 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
     const connectWallet = useCallback(async (onConnected?: () => void) => {
         try {
-            const wallet = await connect({ modalMode: 'alwaysAsk' });
+            const wallet = await connect({
+                modalMode: 'alwaysAsk',
+                include: ['argentX', 'braavos', 'xverse']
+            });
 
             if (!wallet) {
                 throw new Error('No wallet selected');
