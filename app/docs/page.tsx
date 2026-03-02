@@ -193,9 +193,8 @@ const DocsPage = () => {
                                         <a
                                             key={section.id}
                                             href={`#${section.id}`}
-                                            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all group"
+                                            className="block px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all group"
                                         >
-                                            <span className="group-hover:scale-110 transition-transform">{section.icon}</span>
                                             {section.title}
                                         </a>
                                     ))}
@@ -204,8 +203,8 @@ const DocsPage = () => {
 
                             <div className="p-4 rounded-2xl bg-linear-to-br from-purple-500/20 to-blue-500/20 border border-white/10">
                                 <p className="text-xs text-gray-400 mb-3">Need help? Join our discord community.</p>
-                                <a href="#" className="inline-flex items-center gap-2 text-xs font-bold text-white hover:underline">
-                                    Join Discord <ArrowRight className="w-3 h-3" />
+                                <a href="#" className="inline-flex items-center text-xs font-bold text-white hover:underline">
+                                    Join Discord
                                 </a>
                             </div>
                         </div>
