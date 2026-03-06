@@ -8,6 +8,24 @@ import { TOKENS, Token } from '@/app/lib/tokens';
 import { fetchTokenBalances } from '@/app/lib/balance';
 import BitcoinBridge from '@/app/components/BitcoinBridge';
 
+const SafeTokenIcon = ({ src, symbol }: { src: string; symbol: string }) => {
+    const [error, setError] = useState(false);
+
+    if (error || !src) {
+        return <span className="text-white">{symbol[0]}</span>;
+    }
+
+    return (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+            src={src}
+            alt={symbol}
+            className="w-full h-full object-contain"
+            onError={() => setError(true)}
+        />
+    );
+};
+
 export default function Portfolio() {
     const { isConnected, connectWallet, walletAddress, network: walletNetwork } = useWallet();
     const [filter, setFilter] = useState('');
@@ -221,12 +239,7 @@ export default function Portfolio() {
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold overflow-hidden p-1.5">
-                                                    {asset.icon ? (
-                                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                                        <img src={asset.icon} alt={asset.symbol} className="w-full h-full object-contain" />
-                                                    ) : (
-                                                        <span className="text-white">{asset.symbol[0]}</span>
-                                                    )}
+                                                    <SafeTokenIcon src={asset.icon} symbol={asset.symbol} />
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white">{asset.name}</div>
