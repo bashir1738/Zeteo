@@ -1,108 +1,61 @@
-# Zeteo 
+# Zeteo
 
-Zeteo is a premium, high-performance dashboard built on the **Starknet** ecosystem. It serves as a central hub for users to manage their digital assets, monitor subscription plans, and track eligible airdrops with a focus on visual excellence and seamless user experience.
+Starknet users currently juggle fragmented and risky tools for portfolio tracking, airdrop claims, and bridging. Zeteo unifies the entire lifecycle into a single, privacy-first dashboard powered by ZK-proofs, our custom Bitcoin bridge, and on-chain intelligence subscriptions.
+
+## The Problem
+Navigating the Starknet ecosystem today is fragmented and risky. Users juggle multiple tools to track portfolios, hunt for airdrops, and bridge assets often exposing sensitive wallet data on-chain in the process. There is no unified, privacy-first platform that lets users manage their entire Starknet lifecycle in one place.
+
+## How Zeteo Solves It
+- **Unified Dashboard**: A real-time portfolio manager lets users monitor token balances and values across their Starknet wallets (Argent X & Braavos) in a single, sleek interface.
+- **Privacy-Preserving Airdrop Claims (ZK-Privacy Mode)**: Zeteo integrates Garaga-powered Zero-Knowledge proofs so users can verify airdrop eligibility and claim allocations without revealing their wallet data on-chain. This is a first-of-its-kind privacy layer for airdrop distribution on Starknet.
+- **Bitcoin Bridge via Zeteo Bridge**: Zeteo integrates the Zeteo Bridge directly into the platform, allowing users to bridge BTC assets into Starknet.
+- **On-Chain Subscription System**: A Cairo smart contract manages tiered subscription plans (Basic, Standard, Premium) entirely on-chain. Subscriptions are additive, upgrading mid-cycle rolls remaining time into the new tier. Pricing integrates with Pragma Oracle for real-time ETH/USD conversion.
+- **Airdrop Intelligence**: A curated, real-time tracker surfaces the most valuable airdrops on Starknet and other L2s, with priority notifications and advanced analytics for premium subscribers.
+
+## Tech Stack
+- **Frontend**: Next.js 16 (App Router) + React 19, styled with Tailwind CSS 4 and Framer Motion animations
+- **Smart Contracts**: Cairo (Starknet), featuring subscription management, ZK-proof verification via Garaga, and Pragma Oracle integration
+- **Bridge**: Zeteo Bridge (Our own platform bridge for Bitcoin assets)
+- **Backend Services**: Next.js API Routes + Redis caching (24-hour TTL) + background worker service for data sync
+- **Blockchain**: Starknet.js for on-chain interaction
+
+## Why It Matters
+Zeteo redefines how users interact with Starknet by combining portfolio management, privacy-first airdrop claims, Zeteo-powered Bitcoin bridging, and on-chain subscriptions into a single, beautifully designed platform proving that decentralized tools can be both powerful and accessible.
+
+Looking ahead, we aim to expand Zeteo into a cross-chain intelligence hub extending beyond Starknet to cover all major L2s, integrating deeper with DeFi protocols, and building a community-driven airdrop discovery engine powered by on-chain analytics. The goal is simple: if there's value in the ecosystem, Zeteo helps you find it privately, efficiently, and beautifully.
 
 ---
 
-- **Starknet Wallet Integration**: Connect seamlessly with Argent X or Braavos wallets.
-- **Interactive Portfolio Tracking**: Real-time monitoring of your digital assets on Starknet.
-- **ZK-Privacy Airdrop Claims**: Securely claim allocations using Garaga-powered ZK-proofs to protect your eligibility data.
-- **Bitcoin Bridge**: Integrated trustless bridging capabilities for Bitcoin assets.
-- **Subscription Management**: Access premium features through tiered plans (Basic, Standard, Premium).
-- **Stunning UI/UX**: Built with a "liquid glass" aesthetic, featuring smooth animations and a responsive design.
-
----
-
-- **Frontend**: [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.js.org/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/)
-- **Blockchain**: [Starknet.js](https://www.starknetjs.com/), [Garaga](https://github.com/keep-starknet-strange/garaga) (ZK-Proof Verification)
-- **State/Data**: [Redis](https://redis.io/)
-- **Icons**: [Lucide React](https://lucide.dev/), [React Icons](https://react-icons.github.io/react-icons/)
-
----
-
-##  Getting Started
+## Getting Started
 
 ### Prerequisites
-
 - **Node.js**: v20 or higher
 - **Package Manager**: `npm` or `yarn`
 - **Redis**: A running Redis instance for data caching
 - **Starknet Wallet**: [Argent X](https://www.argent.xyz/argent-x/) or [Braavos](https://braavos.app/) browser extension
 
 ### Installation
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/bashir1738/Zeteo.git
+   cd Zeteo
+   ```
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Set up Environment Variables**:
+   Create a `.env.local` file in the root directory and add your configuration.
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/bashir1738/Zeteo.git
-    cd Zeteo
-    ```
-
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-
-3.  **Set up Environment Variables**:
-    Create a `.env.local` file in the root directory and add your configuration (e.g., Redis URL, API keys).
-
-4.  **Run the development server**:
-    ```bash
-    npm run dev
-    ```
-    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
----
-
-##  Platform Architecture
-
-Zeteo is designed with a modern decoupled architecture:
-
-1.  **Next.js Frontend**: Handles the UI, animations, and client-side wallet interactions.
-2.  **API Routes**: Serverless functions located in `app/api` for fetching airdrop data and prices.
-3.  **Redis Cache**: Stores user data and subscription status with a 24-hour TTL for performance.
-4.  **Cairo Smart Contracts**: Located in the `contracts` directory, handling on-chain logic.
-5.  **Worker Service**: (In `worker` directory) For background tasks and data synchronization.
-
----
-
-##  How it Works
-
-### 1. Connecting Your Wallet
-Upon entering Zeteo, users can connect their Starknet wallet via the navigation bar. This establishes a secure connection to fetch the wallet address and interact with the blockchain.
-
-### 2. Choosing a Subscription
-Zeteo offers tiered subscription plans (Basic, Standard, Premium). Subscribing unlocks the full potential of the dashboard, allowing users to track a wider range of airdrops and portfolio metrics.
-
-### 3. Using the Dashboard
-Once subscribed and connected, the **Dashboard** (`/dashboard`) becomes your mission control. It displays:
-- Your current subscription plan and expiry date.
-- **Live Portfolio**: Track your token balances and values in real-time.
-- **Airdrop Management**: View eligible and suggested airdrops.
-- **ZK-Privacy Mode**: Toggle ZK-Privacy to claim allocations without revealing your full eligibility profile on-chain.
-
-### 4. Bitcoin Bridging
-Users can utilize the integrated Bitcoin Bridge component to move assets trustlessly into the Starknet ecosystem for use with Zeteo-supported protocols.
-
----
-
-##  Project Structure
-
+## Project Structure
 ```text
 ├── app/              # Next.js App Router (Pages, Components, API, Context)
 ├── contracts/        # Starknet Smart Contracts (Cairo)
 ├── public/           # Static assets (Images, Videos)
 ├── worker/           # Background worker service
-├── redis_schema.md   # Documentation for Redis data structures
 └── package.json      # Project dependencies and scripts
 ```
-
----
-
-##  Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-##  License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

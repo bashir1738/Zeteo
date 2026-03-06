@@ -49,6 +49,19 @@ body {
   background-position: center top;
 }
 
+/* Hide Spin Buttons */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

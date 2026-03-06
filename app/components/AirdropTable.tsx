@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ExternalLink, Rocket, Lightbulb, Shield, Lock, Fingerprint, RefreshCw, CheckCircle2, Check, X } from 'lucide-react';
+import { ExternalLink, Rocket, Lightbulb, Shield, Lock, Fingerprint, Check } from 'lucide-react';
 import clsx from 'clsx';
+import { StatusModal } from './StatusModal';
 
 interface Airdrop {
     name: string;
@@ -314,80 +315,19 @@ const AirdropTable = ({ airdrops }: AirdropTableProps) => {
 
     return (
         <div className="space-y-6 animate-fade-in relative">
-            {claimStatus.status !== 'idle' && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-                    <div className="bg-[#111] border border-white/10 p-8 rounded-3xl w-full max-w-md flex flex-col items-center gap-6 shadow-2xl relative overflow-hidden">
-
-                        {/* Background glow for success */}
-                        {claimStatus.status === 'success' && (
-                            <div className="absolute inset-0 bg-green-500/10 animate-pulse pointer-events-none" />
-                        )}
-
-                        {/* Top Right Close Button for Success */}
-                        {claimStatus.status === 'success' && (
-                            <button
-                                onClick={() => setClaimStatus({ status: 'idle', step: '', airdropName: null })}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        )}
-
-                        {/* Icon */}
-                        <div className="relative">
-                            {claimStatus.status === 'success' ? (
-                                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border-4 border-green-500/30 animate-bounce">
-                                    <CheckCircle2 className="w-10 h-10 text-green-400" />
-                                </div>
-                            ) : (
-                                <div className="relative w-20 h-20 flex items-center justify-center">
-                                    <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-                                    <div className="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
-                                    <Shield className="w-8 h-8 text-purple-400" />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Text Content */}
-                        <div className="text-center space-y-2 relative z-10 w-full">
-                            <h3 className={clsx(
-                                "text-2xl font-bold",
-                                claimStatus.status === 'success' ? "text-white" : "text-white"
-                            )}>
-                                {claimStatus.status === 'success' ? 'Claim Successful!' : 'Processing'}
-                            </h3>
-
-                            {claimStatus.status === 'success' ? (
-                                <div className="space-y-4 mt-4">
-                                    <p className="text-gray-400 text-sm">
-                                        Your ZK-Proof was verified on-chain. The airdrop for <strong className="text-white">{claimStatus.airdropName}</strong> has been secured privately.
-                                    </p>
-                                    <div className="bg-black/50 p-3 rounded-xl border border-white/5 flex flex-col gap-1 items-center">
-                                        <span className="text-[10px] text-gray-500 uppercase tracking-widest">Transaction Hash</span>
-                                        <span className="text-purple-400 font-mono text-sm">{claimStatus.txHash}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setClaimStatus({ status: 'idle', step: '', airdropName: null })}
-                                        className="w-full mt-2 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
-                                    >
-                                        Done
-                                    </button>
-                                </div>
-                            ) : (
-                                <>
-                                    <p className="text-purple-400 font-medium animate-pulse">{claimStatus.step}</p>
-                                    <p className="text-xs text-gray-500 font-mono mt-4 pt-4 border-t border-white/5">ZK-Proof Engine: Garaga</p>
-                                    {claimStatus.status === 'claiming' && (
-                                        <div className="w-full h-1.5 bg-white/5 rounded-full mt-4 overflow-hidden">
-                                            <div className="h-full bg-linear-to-r from-purple-500 to-blue-500 rounded-full w-2/3 animate-[pulse_2s_ease-in-out_infinite]"></div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <StatusModal
+                isOpen={claimStatus.status !== 'idle'}
+                onClose={() => setClaimStatus({ status: 'idle', step: '', airdropName: null })}
+                status={claimStatus.status === 'checking' || claimStatus.status === 'claiming' ? 'processing' : claimStatus.status}
+                title="Processing Airdrop"
+                step={claimStatus.step}
+                txHash={claimStatus.txHash}
+                txLabel="Transaction Hash"
+                successMessage={`Your ZK-Proof was verified on-chain. The airdrop for ${claimStatus.airdropName} has been secured privately.`}
+                Icon={Shield}
+                iconColor="text-purple-400"
+                actionLabel="Done"
+            />
 
             {/* Eligible Airdrops Section */}
             <div className="w-full overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl">
