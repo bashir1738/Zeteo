@@ -68,45 +68,63 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             if (localStorage.getItem('starknet_connected') !== 'true') return;
 
             try {
+                // Eagerly connect without showing modal
                 const wallet = await connect({
                     modalMode: 'neverAsk',
-                    include: ['argentX', 'braavos', 'xverse']
+                    // 'include' is not necessary for eager connection if we just want the active wallet
                 }) as ExtendedStarknetWindow;
 
                 if (!wallet) {
-                    return;
+                    // Try one more time with specific inclusions just in case
+                    const retryWallet = await connect({
+                        modalMode: 'neverAsk',
+                        include: ['argentX', 'braavos', 'xverse']
+                    }) as ExtendedStarknetWindow;
+                    
+                    if (!retryWallet) {
+                         localStorage.removeItem('starknet_connected'); // Clean up if definitely no wallet
+                         return;
+                    }
                 }
 
-                // Initial network detection from wallet
-                if (wallet.chainId) {
-                    const detectedNetwork = getNetworkFromChainId(wallet.chainId);
-                    console.log(`Initial network sync: ${detectedNetwork}`);
-                    setNetwork(detectedNetwork);
-                }
+                const activeWallet = wallet || await connect({ modalMode: 'neverAsk', include: ['argentX', 'braavos', 'xverse'] }) as ExtendedStarknetWindow;
 
-                const walletAccount = await createAccountFromWallet(wallet);
+                if (activeWallet) {
+                    // Rapidly restore address for UI rendering
+                    if (activeWallet.selectedAddress) {
+                        setWalletAddress(activeWallet.selectedAddress);
+                        setIsConnectedState(true);
+                    }
 
-                if (walletAccount) {
-                    setAccount(walletAccount);
-                    setWalletAddress(walletAccount.address || wallet.selectedAddress || null);
-                    setIsConnectedState(true);
-                } else if (wallet.selectedAddress) {
-                    setWalletAddress(wallet.selectedAddress);
-                    setIsConnectedState(true);
-                }
+                    // Initial network detection from wallet
+                    if (activeWallet.chainId) {
+                        const detectedNetwork = getNetworkFromChainId(activeWallet.chainId);
+                        console.log(`Initial network sync: ${detectedNetwork}`);
+                        setNetwork(detectedNetwork);
+                    }
 
-                // Listen for network changes in the wallet
-                if (wallet.on) {
-                    wallet.on('networkChanged', (chainId?: string) => {
-                        if (chainId) {
-                            const newNetwork = getNetworkFromChainId(chainId);
-                            console.log('Wallet triggered network change:', newNetwork);
-                            setNetwork(newNetwork);
-                        }
-                    });
+                    // Then try to fully restore the account object
+                    const walletAccount = await createAccountFromWallet(activeWallet);
+
+                    if (walletAccount) {
+                        setAccount(walletAccount);
+                        setWalletAddress(walletAccount.address || activeWallet.selectedAddress || null);
+                        setIsConnectedState(true);
+                    }
+
+                    // Listen for network changes in the wallet
+                    if (activeWallet.on) {
+                        activeWallet.on('networkChanged', (chainId?: string) => {
+                            if (chainId) {
+                                const newNetwork = getNetworkFromChainId(chainId);
+                                console.log('Wallet triggered network change:', newNetwork);
+                                setNetwork(newNetwork);
+                            }
+                        });
+                    }
                 }
-            } catch {
-                console.log('No wallet connected or error checking connection');
+            } catch (error) {
+                console.log('Error checking wallet connection:', error);
             }
         };
 
