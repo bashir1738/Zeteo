@@ -39,34 +39,34 @@ const Hero = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0a0a0a] border border-white/10 text-xs font-mono text-purple-400"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0a0a0a] border border-white/10 text-xs font-mono text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
                 >
                     <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
                     </span>
-                    New Airdrops Added Daily
+                    Privacy-First ZK Airdrops
                 </motion.div>
 
                 <motion.h1
-                    className="text-5xl md:text-7xl font-bold tracking-tight text-white pb-2 leading-none"
+                    className="text-6xl md:text-8xl font-black tracking-tighter text-white pb-2 leading-[0.9]"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
                 >
                     Maximize Your <br />
-                    <span className="text-purple-500">
-                        Crypto Rewards
+                    <span className="bg-clip-text text-transparen text-purple-500">
+                        ZK Rewards
                     </span>
                 </motion.h1>
 
                 <motion.p
-                    className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed font-light"
+                    className="text-lg md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed font-light tracking-wide px-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
                 >
-                    The ultimate platform to track allocations, claim deadlines, and discover high-value airdrops before they sparkle out.
+                    The ultimate cross-chain platform to track allocations, secure <span className="text-white font-medium">private claims via Garaga</span>, and discover high-value airdrops across Starknet, zkSync, and beyond.
                 </motion.p>
 
                 <motion.div
